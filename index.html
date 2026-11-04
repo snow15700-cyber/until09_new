@@ -528,7 +528,14 @@
     const loadingHtml = '<p class="text-gray-400 text-sm py-2 text-center">불러오는 중…</p>';
 
     // ---- 결과 화면 온라인 영역 ----
+    let resultToken = 0;
+    // 늦게 도착한 응답이 이미 바뀐 화면에 쓰지 않도록 (다시 시도를 빨리 누른 경우 등)
+    function setHtml(id, html, token) {
+        if (token !== resultToken) return;
+        const el = document.getElementById(id); if (el) el.innerHTML = html;
+    }
     async function renderResultOnline(isWin, seconds, justRegistered) {
+        const token = ++resultToken;
         const box = document.getElementById('onlinePanel');
         const course = selectedTheme, cname = COURSE_NAMES[course];
         if (isWin) {
@@ -536,10 +543,10 @@
                 box.innerHTML = `<h3 class="text-yellow-300 text-sm font-bold mb-2">👑 ${cname} 명예의 전당</h3><p id="fameNote" class="text-xs text-gray-300 mb-2 text-center">${justRegistered === 'ok' ? '등록 완료! 명예의 전당에 이름이 올라갔어요.' : '이미 명예의 전당에 이름이 올라가 있어요.'}</p><div id="fameMini" class="max-h-40 overflow-y-auto">${loadingHtml}</div>`;
                 try {
                     const rows = await fetchFame(course);
-                    document.getElementById('fameMini').innerHTML = fameListHtml(rows);
+                    setHtml('fameMini', fameListHtml(rows), token);
                     const idx = rows.findIndex(r => r.nickname === userData.nickname && r.tag === userData.tag);
-                    if (idx >= 0) document.getElementById('fameNote').innerHTML = (justRegistered === 'ok' ? '등록 완료! ' : '') + `<b class="text-yellow-300">${idx + 1}번째</b>로 ${cname}을 클리어했어요.`;
-                } catch (e) { document.getElementById('fameMini').innerHTML = errorHtml; }
+                    if (idx >= 0) setHtml('fameNote', (justRegistered === 'ok' ? '등록 완료! ' : '') + `<b class="text-yellow-300">${idx + 1}번째</b>로 ${cname}을 클리어했어요.`, token);
+                } catch (e) { setHtml('fameMini', errorHtml, token); }
             } else {
                 box.innerHTML = `<h3 class="text-yellow-300 text-sm font-bold mb-1">👑 ${cname} 명예의 전당 등록</h3>
                     <p class="text-xs text-gray-300 mb-2">60초를 버텼어요! 명예의 전당에 남길 이름을 적어주세요. (코스당 1번)</p>
@@ -559,10 +566,10 @@
                 delete userData.pending[course]; saveData();
             } else mr = await fetchMyRank(course);
             const rows = await fetchTop(course);
-            document.getElementById('topMini').innerHTML = topListHtml(rows);
-            document.getElementById('rankMini').innerHTML = myRankHtml(mr);
+            setHtml('topMini', topListHtml(rows), token);
+            setHtml('rankMini', myRankHtml(mr), token);
         } catch (e) {
-            document.getElementById('topMini').innerHTML = errorHtml;
+            setHtml('topMini', errorHtml, token);
         }
     }
     async function submitFame() {
@@ -576,6 +583,7 @@
             showToast(r === 'exists' ? '이미 명예의 전당에 등록되어 있어요' : `👑 명예의 전당에 "${c.name}" 등록 완료!`);
             renderResultOnline(true, 60, r);
         } catch (e) {
+            if (!document.body.contains(btn)) return;
             btn.disabled = false; btn.textContent = '등록';
             msg.textContent = '등록하지 못했어요. 인터넷 연결을 확인하고 다시 눌러주세요.';
         }
@@ -2036,7 +2044,7 @@
         enemies = [];
         enemySpawnTimer = 0;
 
-        if (destinationMesh) { scene.remove(destinationMesh); destinationMesh = null; }
+        if (destinationMesh) { scene.remove(destinationMesh); disposeObject(destinationMesh); destinationMesh = null; }
         clearFx(); crash = null; ending = null;
         // [최적화] 목적지를 미리 만들어 카메라 뒤 멀리 숨겨두고, 쓰일 재질을 지금 미리 준비
         destinationMesh = createDestination(selectedTheme);
@@ -2349,7 +2357,12 @@
     function clearWeather() {
         while (weatherGroup.children.length) {
             const o = weatherGroup.children.pop();
-            o.traverse(c => { if (c.geometry) c.geometry.dispose(); });
+            o.traverse(c => {
+                if (c.geometry) c.geometry.dispose();
+                // 재질·텍스처도 정리 (공용 빛 텍스처 GLOW_TEX는 남겨둠)
+                const mats = c.material ? (Array.isArray(c.material) ? c.material : [c.material]) : [];
+                mats.forEach(m => { if (m.map && m.map !== GLOW_TEX) m.map.dispose(); m.dispose(); });
+            });
         }
         weather = null;
     }
@@ -2518,6 +2531,7 @@
     const fxParts = [];
     const FX_BOX = new THREE.BoxGeometry(1, 1, 1);
     const FX_BALL = new THREE.IcosahedronGeometry(1, 1);
+    setTimeout(() => { SHARED_GEO.add(FX_BOX); SHARED_GEO.add(FX_BALL); }, 0);
     let shake = 0;
     function addPart(mesh, o) {
         scene.add(mesh);
@@ -2526,7 +2540,7 @@
     function updateFx(dt) {
         for (let i = fxParts.length - 1; i >= 0; i--) {
             const p = fxParts[i]; p.age += dt;
-            if (p.age >= p.life) { scene.remove(p.mesh); if (p.ownMat) p.mesh.material.dispose(); fxParts.splice(i, 1); continue; }
+            if (p.age >= p.life) { scene.remove(p.mesh); if (p.dest) disposeObject(p.mesh); else if (p.ownMat) p.mesh.material.dispose(); fxParts.splice(i, 1); continue; }
             p.vel.y -= p.gravity * dt;
             if (p.drag) p.vel.multiplyScalar(Math.max(0, 1 - p.drag * dt));
             p.mesh.position.addScaledVector(p.vel, dt);
@@ -2549,8 +2563,17 @@
         try { renderer.compile(scene, camera); } catch (e) {}
         tmp.forEach(m => scene.remove(m));   // 재질은 정리하지 않음 (정리하면 준비해둔 셰이더도 같이 지워짐)
     }
+    // 목적지 물체 정리 (지오메트리·재질·글자 텍스처까지)
+    const SHARED_GEO = new Set();   // 효과에서 같이 쓰는 지오메트리는 지우면 안 됨 (FX_BOX, FX_BALL)
+    function disposeObject(o) {
+        o.traverse(c => {
+            if (c.geometry && !SHARED_GEO.has(c.geometry)) c.geometry.dispose();
+            const mats = c.material ? (Array.isArray(c.material) ? c.material : [c.material]) : [];
+            mats.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); });
+        });
+    }
     function clearFx() {
-        fxParts.forEach(p => { scene.remove(p.mesh); if (p.ownMat) p.mesh.material.dispose(); });
+        fxParts.forEach(p => { scene.remove(p.mesh); if (p.dest) disposeObject(p.mesh); else if (p.ownMat) p.mesh.material.dispose(); });
         fxParts.length = 0; shake = 0;
         speedCanvas && sctx.clearRect(0, 0, speedCanvas.width, speedCanvas.height);
     }
@@ -2661,13 +2684,13 @@
             dir.normalize();
             if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
             const radius = m.geometry.boundingSphere.radius * Math.max(m.scale.x, m.scale.y, m.scale.z);
-            if (tmp.y < 0.8 && radius > 6) { addPart(m, { life: 3.2, floor: false }); return; }   // 바닥·잔디·활주로는 그대로
+            if (tmp.y < 0.8 && radius > 6) { addPart(m, { life: 3.2, floor: false, dest: true }); return; }   // 바닥·잔디·활주로는 그대로
             if (radius > 9) {                                                                     // 큰 덩어리(타워 등)는 뒤로 무너짐
-                addPart(m, { life: 3.2, gravity: 5, floor: false, vel: new THREE.Vector3(dir.x * 3, -1.5, -6), spin: new THREE.Vector3(-0.5 - Math.random() * 0.4, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.4) });
+                addPart(m, { life: 3.2, gravity: 5, floor: false, dest: true, vel: new THREE.Vector3(dir.x * 3, -1.5, -6), spin: new THREE.Vector3(-0.5 - Math.random() * 0.4, (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.4) });
                 return;
             }
             const power = (14 + Math.random() * 26) / (1 + radius / 5);   // 큰 조각은 느리게
-            addPart(m, { life: 3.2, gravity: 26, drag: 0.15, vel: dir.multiplyScalar(power).add(new THREE.Vector3(0, 8 + Math.random() * 14, 0)), spin: new THREE.Vector3((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6) });
+            addPart(m, { life: 3.2, gravity: 26, drag: 0.15, dest: true, vel: dir.multiplyScalar(power).add(new THREE.Vector3(0, 8 + Math.random() * 14, 0)), spin: new THREE.Vector3((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6) });
         });
         destinationMesh.children.forEach(c => c.visible = false);
         // 2) 불덩어리 (노랑 → 주황 → 빨강, 커지며 사라짐)
