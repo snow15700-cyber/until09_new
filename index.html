@@ -114,6 +114,8 @@
         .lb-logo small { display: block; margin-top: 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.88); }
         .lb-logo .lb-pettime { margin-top: 6px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(0,0,0,0.45); letter-spacing: 0.02em; font-size: 11.5px; }
         .lb-logo .lb-pettime:empty { display: none; }
+        /* 좁은 휴대폰: 제목이 오른쪽 위 소리 버튼에 가리지 않게 양옆 여백 + 글자 조금 작게 */
+        @media (max-width: 400px) { .lb-logo { padding: 0 52px; } .lb-logo #lobbyTitle { font-size: min(28px, 7.4vw); } }
         .lb-card .ptime { color: #fcd34d; font-weight: 700; }
         .lb-fade { position: absolute; inset: 0; z-index: 1; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.28s ease; }
         .lb-fade.on { opacity: 1; }
@@ -613,9 +615,9 @@
     //  v2: (베타) 뽑기 룰렛 업데이트 / v3: 정식 버전 출시 — 당시 한 번만 초기화했고, 이제는 초기화하지 않음
     //  v4: 반려동물 업데이트 → 보유 차량·크레딧·기록은 그대로, 웰시코기 지급 + 안내창
     //      신규 플레이어는 60C로 시작
-    const DATA_VERSION = 5;   // 5: 패치노트 v26.11.07 (기존 플레이어에게 1회 안내)
+    const DATA_VERSION = 6;   // 5: 패치노트 v26.11.07 · 6: 한 화면 패치노트로 다시 1회 안내
     const RESET_BONUS = 60;
-    let pendingNotice = null;
+    let pendingNotice = null, noticeFromVersion = 0;
     function loadData() {
         let hadSaved = false;
         try {
@@ -624,11 +626,14 @@
         } catch (e) {} // 저장소 차단(사생활 보호 모드 등) 시 새 데이터로 시작
         ensureIdentity();
         delete userData.highScores; // 예전 점수 랭킹 정리
-        if ((userData.dataVersion || 1) < DATA_VERSION) {
+        noticeFromVersion = userData.dataVersion || 1;
+        if (noticeFromVersion < DATA_VERSION) {
             if (!hadSaved) { userData.credits = RESET_BONUS; pendingNotice = 'welcome'; }   // 신규: 시작 선물 60C
             else pendingNotice = 'patch';                                                    // 기존: 진행 상황 그대로 + 패치노트 1회
             userData.dataVersion = DATA_VERSION;
         }
+        // 확인용: 주소 뒤에 ?patchnote 를 붙이면 언제든 패치노트를 다시 띄움
+        try { if (hadSaved && /[?&]patchnote\b/.test(location.search)) pendingNotice = 'patch'; } catch (e) {}
         // 저장값이 이상하게 깨져 있을 때를 대비한 정리
         if (!Array.isArray(userData.ownedCars) || !userData.ownedCars.includes('roadster')) userData.ownedCars = ['roadster'].concat(Array.isArray(userData.ownedCars) ? userData.ownedCars : []);
         userData.ownedCars = userData.ownedCars.filter((id, i, a) => CAR_DB.some(c => c.id === id) && a.indexOf(id) === i);
@@ -681,7 +686,9 @@
         if (!welcome) body.scrollTop = 0;
         document.getElementById('noticeGift').innerHTML = welcome
             ? '시작 선물로 <b class="text-yellow-300">60C (뽑기 1번)</b>와 <b class="text-yellow-300">웰시코기</b>를 드렸어요.'
-            : '첫 반려동물 <b class="text-yellow-300">🐶 웰시코기</b>를 선물로 드렸어요.<br><span class="text-xs text-gray-400">보유 차량·크레딧·기록은 그대로예요.</span>';
+            : noticeFromVersion < 4   // 반려동물이 없던 버전에서 온 사람에게만 웰시코기 선물 안내
+              ? '첫 반려동물 <b class="text-yellow-300">🐶 웰시코기</b>를 선물로 드렸어요.<br><span class="text-xs text-gray-400">보유 차량·크레딧·기록은 그대로예요.</span>'
+              : '<span class="text-xs text-gray-400">보유 차량·크레딧·기록은 그대로예요.</span>';
         document.getElementById('noticeModal').classList.remove('hidden');
     }
     function closeNotice() {
@@ -1400,7 +1407,11 @@
         prepareTrack(theme);
         const first = !pendingTheme;
         pendingTheme = theme;
-        if (first) lobbyFade(() => { selectedTheme = pendingTheme; pendingTheme = null; applyTheme(); updateLobbyUI(); });   // 페이드 중 바꾸면 마지막 선택으로
+        if (first) lobbyFade(() => {
+            const t = pendingTheme; pendingTheme = null;
+            if (gameState !== 'LOBBY') return;   // 그 사이 출발했으면 코스를 바꾸지 않음 (달리는 중에 코스가 바뀌던 문제)
+            selectedTheme = t; applyTheme(); updateLobbyUI();
+        });   // 페이드 중 바꾸면 마지막 선택으로
     }
     function lobbyFade(fn) {
         const f = document.getElementById('lobbyFade');
@@ -1780,7 +1791,7 @@
     }
     // 버튼에서 부르는 함수
     function startRace() {               // 로비 '레이싱 시작' / 결과 '다시 시도하기'
-        if (fading || intro) return;
+        if (fading || intro || pendingTheme) return;   // 코스를 바꾸는 0.28초 동안엔 출발하지 않음
         stopAllMusic(FADE_OUT);
         // 로비에서 출발: 페이드 없이 카메라가 돌아 차 뒤로 붙으며 시작 / 다시 시도하기: 기존 페이드
         if (gameState === 'LOBBY' && player.meshGroup) { startIntro(); return; }
