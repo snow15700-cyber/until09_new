@@ -25,16 +25,18 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- 글꼴은 화면을 막지 않고 뒤에서 받음 (받기 전엔 기본 글꼴로 보임) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" media="print" onload="this.media='all'">
+    <!-- 게임 폰트: 제목용(Jua) + 본문용(Pretendard). 화면에 쓰인 글자 조각만 받아서 가벼움 -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
     <style>
 
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #0f172a; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #0f172a; font-family: var(--fb); overflow: hidden; touch-action: none; }
         #game-container { position: relative; width: 100%; max-width: 600px; height: 100%; margin: 0 auto; background-color: #000; box-shadow: 0 0 30px rgba(0,0,0,0.8); overflow: hidden; }
         #gameCanvas { display: block; width: 100%; height: 100%; transition: filter 0.35s ease; }
         #gameCanvas.grayscale-fx { filter: grayscale(1) contrast(1.1); }
         .no-select { user-select: none; -webkit-user-select: none; }
-        .btn-press:active { transform: scale(0.95); background-color: rgba(255, 255, 255, 0.3); }
+        .btn-press:active { background-color: rgba(255, 255, 255, 0.3); }
 
         /* [iOS 대응] 주소창 높이를 뺀 실제 보이는 높이 사용 + 노치/홈바 안전영역 */
         @supports (height: 100dvh) { body, html { height: 100dvh; } }
@@ -197,7 +199,7 @@
         .lb-petwrap > .lb-card .tag { right: 38px; }
         .lb-pen { position: absolute; top: 12px; right: 5px; width: 30px; height: 30px; border: 0; border-radius: 8px; background: rgba(255,255,255,0.06);
             font-size: 14px; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0; }
-        .lb-pen:active { transform: scale(0.9); background: rgba(255,255,255,0.16); }
+        .lb-pen:active { background: rgba(255,255,255,0.16); }
         .lb-pen:focus-visible { outline: 2px solid #fbbf24; outline-offset: 1px; }
         .lb-penhint { position: absolute; top: 46px; right: 2px; z-index: 2; background: #fbbf24; color: #111827; font-size: 11.5px; font-weight: 900;
             padding: 5px 9px; border-radius: 9px; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4); animation: penHint 0.35s ease-out; }
@@ -218,7 +220,7 @@
             background: linear-gradient(90deg, #10b981, #14b8a6); box-shadow: 0 6px 18px rgba(16,185,129,0.35); }
         .lb-go small { margin-left: 6px; font-size: 12px; font-weight: 700; opacity: 0.88; }
         .lb-go:disabled { opacity: 0.5; cursor: not-allowed; }
-        .lb-card:active:not(.locked), .lb-go:active, .lb-gacha:active, .lb-adopt:active, .lb-pill:active { transform: scale(0.97); }
+        
         .lb-card:focus-visible, .lb-go:focus-visible, .lb-tab:focus-visible, .lb-adopt:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
 
         /* ===== 주행: 현재 시각 · 남은 시간 알림 · 마지막 카운트다운 ===== */
@@ -239,19 +241,19 @@
         .seg-digits .s { fill: currentColor; opacity: 0.035; transition: opacity 0.08s; }   /* 꺼진 칸은 거의 안 보이게 */
         .seg-digits .s.on { opacity: 1; }
         .seg-digits.late { color: #ffc2c2; filter: drop-shadow(0 0 1.5px rgba(255,90,90,0.85)) drop-shadow(0 0 6px rgba(255,60,60,0.3)); }   /* 지각 임박 · 지각 모드 */
-        .seg-unit { position: absolute; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 8px; letter-spacing: 0.06em; color: rgba(220,230,255,0.55); line-height: 1; }
+        .seg-unit { position: absolute; font-family: var(--fb); font-weight: 700; font-size: 8px; letter-spacing: 0.06em; color: rgba(220,230,255,0.55); line-height: 1; }
         .seg-unit.tl { top: 6px; left: 7px; } .seg-unit.br { bottom: 6px; right: 8px; }
         .seg-bar { position: absolute; left: 8px; right: 34px; bottom: 7px; height: 2px; border-radius: 1px; background: rgba(228,236,255,0.1); overflow: hidden; }
         .seg-bar span { display: block; height: 100%; width: 0; background: #e4ecff; box-shadow: 0 0 4px rgba(175,198,255,0.9); transition: width 0.2s; }
         .seg-bar.hot span { background: #ffb4b4; box-shadow: 0 0 4px rgba(255,90,90,0.9); }
         .dash-sub { display: flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 8px;
             background: rgba(14,18,24,0.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
-            font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.65); white-space: nowrap; font-variant-numeric: tabular-nums; }
+            font-family: var(--fb); font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.65); white-space: nowrap; font-variant-numeric: tabular-nums; }
         .dash-sub b { font-weight: 900; color: #fff; }
         .dash-sub i { width: 1px; height: 10px; background: rgba(255,255,255,0.25); }
         .dash-under { display: flex; gap: 4px; align-items: center; }
         .dash-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #f4f4f2; display: flex; align-items: center; justify-content: center;
-            font-family: 'Inter', sans-serif; font-weight: 900; font-size: 9.5px; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+            font-family: var(--fb); font-weight: 900; font-size: 9.5px; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
         .dash-dot.hidden, .dash-shield.hidden { display: none; }   /* 숨김이 위의 display:flex에 덮이지 않게 */
         .dash-shield { height: 20px; padding: 0 6px; border-radius: 10px; background: rgba(6,78,59,0.85); border: 1px solid #34d399; font-size: 11px; display: flex; align-items: center; }
         .time-banner { position: absolute; left: 50%; top: calc(13.5rem + env(safe-area-inset-top, 0px)); z-index: 31; transform: translate(-50%, -12px) scale(0.96);
@@ -304,7 +306,7 @@
         .lb-modebtn.sel { background: #1f2937; color: #fff; border-color: #34d399; }
         .lb-modebtn.sel.endless { border-color: #f87171; background: #3b1219; }
         .lb-modebtn.locked { color: #4b5563; }
-        .lb-modebtn:active:not(.locked) { transform: scale(0.97); }
+        
         .lb-modebtn:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
 
         /* ===== 로비 → 주행 카메라 연출: 로비 UI가 빠지고 HUD가 서서히 나타남 ===== */
@@ -315,6 +317,29 @@
         #lobbyScreen.lb-leaving * { pointer-events: none !important; }
         #hud { transition: opacity 0.4s ease; }
         #hud.intro-hide { opacity: 0; }
+    </style>
+
+    <style id="font-theme">
+        /* ===== 게임 폰트 =====
+           --ft: 제목·숫자·큰 버튼용 / --fb: 설명·작은 글씨용 */
+        :root { --ft: 'Jua', 'Pretendard Variable', sans-serif;
+                 --fb: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
+        html, body, button, input, textarea, select { font-family: var(--fb); }
+        h1, h2, h3, h4, .font-black, #lobbyTitle, .lb-tab, .lb-card b, .lb-go, .lb-gacha, .lb-adopt, .lb-modebtn,
+        .big-count, .adopt-box h3, .adopt-box button, .sp-title, #endScreen button.font-bold, .lb-pill b {
+            font-family: var(--ft) !important; font-weight: 400 !important; font-synthesis: none; letter-spacing: 0; }
+        .lb-tab small, .lb-go small, .lb-modebtn small, .lb-card span { font-family: var(--fb) !important; font-weight: 600 !important; }
+    </style>
+
+    <style id="press-fx">
+        /* ===== 버튼 눌림 효과 (모든 버튼 공통) =====
+           누르면 살짝 작아지고, 떼면 톡 튕기듯 돌아옴. scale 속성을 써서 버튼 위치(transform)와 충돌 안 함 */
+        button, .lb-pill, [role="button"] { scale: 1; transition: scale .22s cubic-bezier(.34, 1.8, .64, 1), filter .15s; }
+        button:active:not(:disabled):not(.locked), .lb-pill:active, [role="button"]:active { scale: .94; filter: brightness(.92); transition-duration: .06s; }
+        .lb-card:active:not(.locked), .lb-tab:active, .lb-modebtn:active:not(.locked) { scale: .97; }
+        .lb-go:active, .lb-gacha:active { scale: .96; }
+        #controls button:active { scale: .92; }
+        .lb-handle:active { scale: 1; filter: none; }
     </style>
 </head>
 <body>
@@ -329,7 +354,7 @@
 <style>
     #splash { position: fixed; inset: 0; z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center;
         background: radial-gradient(circle at 50% 38%, #1e293b 0%, #0f172a 70%); color: #fff; transition: opacity .45s ease;
-        font-family: 'Inter', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; user-select: none; -webkit-user-select: none; }
+        font-family: var(--fb); user-select: none; -webkit-user-select: none; }
     #splash.hide { opacity: 0; pointer-events: none; }
     .sp-clock { width: 74px; height: 74px; border-radius: 50%; border: 5px solid #facc15; position: relative; margin-bottom: 22px;
         box-shadow: 0 0 28px rgba(250,204,21,.35); animation: spPulse 1.2s ease-in-out infinite; }
@@ -510,24 +535,24 @@
         <div class="w-10/12 max-w-sm bg-gray-900 rounded-xl p-4 border border-gray-700 mb-2">
             <div id="onlinePanel" class="text-sm"></div>
         </div>
-        <button onclick="openRanking()" class="w-10/12 max-w-sm text-sm text-yellow-300 font-bold py-2 mb-3 active:scale-95">🏆 전체 랭킹 보기 ›</button>
+        <button onclick="openRanking()" class="w-10/12 max-w-sm text-sm text-yellow-300 font-bold py-2 mb-3">🏆 전체 랭킹 보기 ›</button>
 
         <div class="flex flex-col gap-2 w-10/12 max-w-sm">
-            <button onclick="startRace()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black rounded-lg shadow-lg flex justify-center items-center gap-1 active:scale-95 transition text-lg">
+            <button onclick="startRace()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black rounded-lg shadow-lg flex justify-center items-center gap-1 transition text-lg">
                 🔄 다시 시도하기
             </button>
             <div class="flex gap-2">
-                <button onclick="shareScreenshot()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg flex justify-center items-center gap-1 active:scale-95 transition text-sm">
+                <button onclick="shareScreenshot()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg flex justify-center items-center gap-1 transition text-sm">
                     📸 스샷 저장
                 </button>
-                <button onclick="backToLobby()" class="flex-1 py-3 bg-white hover:bg-gray-200 text-black font-bold rounded-lg shadow-lg active:scale-95 transition text-sm">
+                <button onclick="backToLobby()" class="flex-1 py-3 bg-white hover:bg-gray-200 text-black font-bold rounded-lg shadow-lg transition text-sm">
                     🏠 로비로 이동
                 </button>
             </div>
         </div>
     </div>
 
-    <button id="muteBtn" onclick="toggleMute()" class="absolute top-3 left-1/2 -translate-x-1/2 z-[60] w-10 h-10 rounded-full bg-black bg-opacity-50 border border-gray-500 text-lg flex items-center justify-center active:scale-90">🔊</button>
+    <button id="muteBtn" onclick="toggleMute()" class="absolute top-3 left-1/2 -translate-x-1/2 z-[60] w-10 h-10 rounded-full bg-black bg-opacity-50 border border-gray-500 text-lg flex items-center justify-center">🔊</button>
     <div id="toastMsg" class="toast">메시지</div>
     <!-- 차량 뽑기 무대 -->
     <div id="gachaModal" class="hidden absolute inset-0 z-[85] flex flex-col items-center justify-center px-4 overflow-hidden" style="background: radial-gradient(ellipse at 50% 38%, rgba(30,41,59,0.97) 0%, rgba(2,6,23,0.99) 70%);">
@@ -542,7 +567,7 @@
             <p id="gachaMsg" class="text-sm mt-2 min-h-[1.25rem]"></p>
         </div>
         <div id="gachaOwned" class="flex items-center gap-3 mt-3 text-sm text-gray-300 h-5"></div>
-        <button id="gachaOk" onclick="closeGacha()" class="invisible mt-4 w-full max-w-sm py-3 rounded-xl bg-emerald-500 text-black font-black text-lg active:scale-95">확인</button>
+        <button id="gachaOk" onclick="closeGacha()" class="invisible mt-4 w-full max-w-sm py-3 rounded-xl bg-emerald-500 text-black font-black text-lg">확인</button>
         <canvas id="gachaFx" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5"></canvas>
         <div id="gachaFlash" style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6"></div>
     </div>
@@ -552,7 +577,7 @@
         <div class="w-full max-w-sm bg-gray-900 border border-gray-700 rounded-2xl p-4 flex flex-col" style="max-height:85%">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-white text-lg font-black">🏆 랭킹</h2>
-                <button onclick="closeRanking()" class="text-gray-300 text-2xl leading-none px-2 active:scale-90">×</button>
+                <button onclick="closeRanking()" class="text-gray-300 text-2xl leading-none px-2">×</button>
             </div>
             <div class="flex gap-2 mb-3">
                 <button id="rtab-morning" class="flex-1 py-2 rounded-lg text-sm font-bold bg-gray-800 text-gray-300" onclick="rankCourse='morning';loadRankingTab()">출근길</button>
@@ -576,7 +601,7 @@
             <h2 id="noticeTitle" class="text-yellow-300 text-xl font-black mb-2">정식 버전이 출시됐어요!</h2>
             <p id="noticeBody" class="text-sm text-gray-200 leading-relaxed mb-1"></p>
             <p id="noticeGift" class="text-sm text-gray-200 leading-relaxed mb-4"></p>
-            <button onclick="closeNotice()" class="w-full py-3 rounded-xl bg-yellow-500 text-black font-black text-lg active:scale-95">시작하기</button>
+            <button onclick="closeNotice()" class="w-full py-3 rounded-xl bg-yellow-500 text-black font-black text-lg">시작하기</button>
         </div>
     </div>
 
@@ -588,8 +613,8 @@
             <input id="nickInput" maxlength="10" placeholder="닉네임" class="w-full px-3 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none focus:border-emerald-400" onkeydown="if(event.key==='Enter')saveNickname()">
             <p id="nickMsg" class="text-xs text-red-300 mt-1 h-4"></p>
             <div class="flex gap-2 mt-2">
-                <button id="nickCancel" onclick="document.getElementById('nickModal').classList.add('hidden')" class="flex-1 py-3 rounded-lg bg-gray-700 text-white font-bold active:scale-95">취소</button>
-                <button onclick="saveNickname()" class="flex-1 py-3 rounded-lg bg-emerald-500 text-black font-black active:scale-95">확인</button>
+                <button id="nickCancel" onclick="document.getElementById('nickModal').classList.add('hidden')" class="flex-1 py-3 rounded-lg bg-gray-700 text-white font-bold">취소</button>
+                <button onclick="saveNickname()" class="flex-1 py-3 rounded-lg bg-emerald-500 text-black font-black">확인</button>
             </div>
         </div>
     </div>
@@ -975,7 +1000,7 @@
                 box.innerHTML = `<h3 class="text-yellow-300 text-sm font-bold mb-1">👑 ${cname} 명예의 전당 등록</h3>
                     <p class="text-xs text-gray-300 mb-2">60초를 버텼어요! 명예의 전당에 남길 이름을 적어주세요. (코스당 1번)</p>
                     <div class="flex gap-2"><input id="fameName" maxlength="10" placeholder="이름 (2~10자)" class="flex-1 min-w-0 px-3 py-2 rounded-lg bg-gray-800 border border-gray-600 text-white text-sm focus:outline-none focus:border-yellow-400" value="${esc(userData.nickname || '')}">
-                    <button id="fameBtn" onclick="submitFame()" class="px-4 py-2 rounded-lg bg-yellow-500 text-black font-black text-sm active:scale-95">등록</button></div>
+                    <button id="fameBtn" onclick="submitFame()" class="px-4 py-2 rounded-lg bg-yellow-500 text-black font-black text-sm">등록</button></div>
                     <p id="fameMsg" class="text-xs mt-1 h-4 text-red-300"></p>`;
             }
             return;
@@ -1072,7 +1097,7 @@
                 : `내 무한 기록 <b class="text-yellow-300">${fmtTime(mine ? mine.endless_best : userData.endlessBest[course])}</b>` + (mine ? ` · ${idx + 1}위` : ''), token);
             if (isRecord && mine) setHtml('endlessRename', `<p class="text-xs text-gray-400 mb-1">기록을 세웠으니 명예의 전당 이름을 바꿀 수 있어요 (선택)</p>
                 <div class="flex gap-2 mb-1"><input id="renameFameInput" maxlength="10" class="flex-1 min-w-0 px-3 py-2 rounded-lg bg-gray-800 border border-gray-600 text-white text-sm focus:outline-none focus:border-yellow-400" value="${esc(mine.fame_name)}">
-                <button id="renameFameBtn" onclick="renameFame()" class="px-4 py-2 rounded-lg bg-yellow-500 text-black font-black text-sm active:scale-95">변경</button></div>
+                <button id="renameFameBtn" onclick="renameFame()" class="px-4 py-2 rounded-lg bg-yellow-500 text-black font-black text-sm">변경</button></div>
                 <p id="renameFameMsg" class="text-xs mb-2 h-4 text-red-300"></p>`, token);
         } catch (e) {
             setHtml('endlessNote', '기록을 올리지 못했어요. 다음 판에 다시 올려볼게요.', token);
@@ -2266,14 +2291,14 @@
         g.fillStyle = '#0b6b3a'; g.fillRect(0, 0, W, H);
         g.strokeStyle = '#ffffff'; g.lineWidth = 8; g.strokeRect(12, 12, W - 24, H - 24);
         g.fillStyle = '#ffffff'; g.textBaseline = 'middle';
-        g.font = "900 64px 'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif"; g.textAlign = 'left';
+        g.font = "900 64px var(--fb),'Apple SD Gothic Neo','Malgun Gothic',sans-serif"; g.textAlign = 'left';
         g.fillText('✈ 공항', 40, 86);
-        g.font = "700 30px 'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif";
+        g.font = "700 30px var(--fb),'Apple SD Gothic Neo','Malgun Gothic',sans-serif";
         g.fillStyle = '#d1fae5'; g.fillText('AIRPORT', 46, 150);
         g.fillStyle = km <= 1 ? '#fde047' : '#ffffff';
-        g.font = "900 78px 'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif"; g.textAlign = 'right';
+        g.font = "900 78px var(--fb),'Apple SD Gothic Neo','Malgun Gothic',sans-serif"; g.textAlign = 'right';
         g.fillText(km.toFixed(1), W - 110, 128);
-        g.font = "700 40px 'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif"; g.fillText('km', W - 40, 142);
+        g.font = "700 40px var(--fb),'Apple SD Gothic Neo','Malgun Gothic',sans-serif"; g.fillText('km', W - 40, 142);
         g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(W / 2 - 22, 220); g.lineTo(W / 2 + 22, 220); g.lineTo(W / 2, 196); g.fill();   // 직진 화살표
         g.fillRect(W / 2 - 7, 218, 14, 22);
         signTex.needsUpdate = true;
@@ -3219,7 +3244,7 @@
         g.fillStyle = opts.bg || '#111'; g.fillRect(0, 0, w, h);
         if (opts.border) { g.strokeStyle = opts.border; g.lineWidth = 8; g.strokeRect(4, 4, w - 8, h - 8); }
         g.fillStyle = opts.color || '#fff';
-        g.font = `900 ${opts.size || 64}px 'Inter', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif`;
+        g.font = `900 ${opts.size || 64}px var(--fb), 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif`;
         g.textAlign = 'center'; g.textBaseline = 'middle';
         g.fillText(text, w / 2, h / 2 + 4);
         return new THREE.CanvasTexture(c);
@@ -4215,7 +4240,7 @@
         g.translate(256, 128); g.beginPath();
         for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2, r = i % 2 ? 92 : 128; g.lineTo(Math.cos(a) * r * 1.7, Math.sin(a) * r * 0.9); }
         g.closePath(); g.fillStyle = '#ffde3b'; g.fill(); g.lineWidth = 10; g.strokeStyle = '#d6281b'; g.stroke();
-        g.font = "900 120px 'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif"; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.font = "900 120px var(--fb),'Apple SD Gothic Neo','Malgun Gothic',sans-serif"; g.textAlign = 'center'; g.textBaseline = 'middle';
         g.lineWidth = 16; g.strokeStyle = '#7a1208'; g.strokeText(text, 0, 8); g.fillStyle = '#ff3b1f'; g.fillText(text, 0, 8);
         return new THREE.CanvasTexture(c);
     }
@@ -5090,6 +5115,35 @@
     gameLoop();
     if (window.__hideSplash) window.__hideSplash();
 
+</script>
+<script>
+/* ===== 탭 효과음 "톡" + 진동 =====
+   음원 파일 없이 코드로 소리를 만듦. 음소거 버튼을 누르면 같이 꺼짐 */
+(function () {
+    document.addEventListener('touchstart', function () {}, { passive: true }); // 아이폰에서 눌림 효과(:active)가 보이게
+    var BIG = '#startBtn, .lb-go, .lb-gacha, .lb-adopt, .adopt-box button, #endScreen button';   // 진동까지 주는 중요한 버튼
+    function tick(big) {
+        if (typeof actx === 'undefined' || !actx || isMuted) return;
+        try {
+            if (actx.state !== 'running') actx.resume();
+            var t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(big ? 720 : 1050, t);
+            o.frequency.exponentialRampToValueAtTime(big ? 380 : 560, t + 0.06);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(big ? 0.32 : 0.2, t + 0.005);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + (big ? 0.11 : 0.07));
+            o.connect(g); g.connect(masterGain); o.start(t); o.stop(t + 0.13);
+        } catch (e) {}
+    }
+    document.addEventListener('pointerdown', function (e) {
+        var b = e.target.closest && e.target.closest('button, .lb-pill, [role="button"]');
+        if (!b || b.disabled || b.classList.contains('locked') || b.closest('#controls') || b.closest('.locked')) return;   // 주행 조작 버튼은 소리 없음
+        var big = b.matches(BIG);
+        tick(big);
+        if (big && navigator.vibrate) try { navigator.vibrate(12); } catch (er) {}
+    }, true);
+})();
 </script>
 </body>
 </html>
