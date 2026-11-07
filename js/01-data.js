@@ -69,7 +69,7 @@ let userData = {
 //  v2: (베타) 뽑기 룰렛 업데이트 / v3: 정식 버전 출시 — 당시 한 번만 초기화했고, 이제는 초기화하지 않음
 //  v4: 반려동물 업데이트 → 보유 차량·크레딧·기록은 그대로, 웰시코기 지급 + 안내창
 //      신규 플레이어는 60C로 시작
-const DATA_VERSION = 6;   // 5: 패치노트 v26.11.07 · 6: 한 화면 패치노트로 다시 1회 안내
+const DATA_VERSION = 7;   // 5: 패치노트 v26.11.07 · 6: 한 화면 패치노트로 다시 1회 안내 · 7: 패치노트 v26.11.08
 const RESET_BONUS = 60;
 let pendingNotice = null, noticeFromVersion = 0;
 function loadData() {
@@ -112,27 +112,33 @@ function loadData() {
     };
     saveData();
 }
-// 기존 플레이어가 새 버전에 처음 들어올 때 1번 보여주는 패치노트
+// 기존 플레이어가 새 버전에 처음 들어올 때 1번 보여주는 패치노트 (v26.11.07 + v26.11.08 내용을 합침)
+const PATCH_VERSION = 'v26.11.08';
 const PATCH_NOTES_HTML = `
-    <p class="pn-sub">반려동물 &amp; 무한모드 업데이트</p>
+    <p class="pn-sub">반려동물 · 무한모드 · 카톡 도전장 업데이트</p>
     <ul class="pn-list">
-        <li><span>🐾</span><p><b>반려동물</b> 차 위에 반려동물을 태우고 달릴 수 있어요. 이름도 지어줄 수 있어요!</p></li>
-        <li><span>♾️</span><p><b>무한모드</b> 코스를 깨면 열려요. 60초가 지나면 지각 모드가 시작돼요!</p></li>
-        <li><span>👑</span><p><b>명예의 전당</b> 무한모드에서 오래 버틴 순서로 순위가 매겨져요.</p></li>
-        <li><span>🏠</span><p><b>화면 변경</b> 메뉴 화면과 게임 화면이 새롭게 바뀌었어요.</p></li>
-        <li><span>⚖️</span><p><b>밸런스</b> 타임 컨트롤러 능력은 한 판에 2번까지 쓸 수 있어요. 좌우 버튼이 더 커졌어요.</p></li>
-        <li><span>🛡️</span><p><b>공정한 순위</b> 기록을 조작하면 순위에 올라가지 않아요.</p></li>
-        <li><span>🐞</span><p><b>버그 수정</b> 차를 그냥 통과하던 문제와 음악이 끊기던 문제를 고쳤어요.</p></li>
+        <li><span>🐾</span><p><b>반려동물</b> 차 지붕에 태우고 함께 달려요. 조건을 달성하면 반값에 입양할 수 있고, ✏️ 버튼으로 이름을 지어 줄 수 있어요</p></li>
+        <li><span>♾️</span><p><b>무한모드</b> 코스를 60초 클리어하면 열려요! 09시가 지나면 지각 모드에 돌입해 끝까지 버텨요</p></li>
+        <li><span>💬</span><p><b>카톡 도전장</b> 결과 화면에서 내 기록을 친구에게 보내요. 친구가 링크를 열면 같은 코스로 바로 도전하고, 결과로 답장할 수 있어요</p></li>
+        <li><span>👑</span><p><b>명예의 전당</b> 무한모드 기록 순으로 정렬돼요. 신기록을 세우면 이름을 바꿀 수 있어요</p></li>
+        <li><span>⚖️</span><p><b>밸런스</b> 타임 컨트롤러 감속은 한 판에 2번까지. 좌우 이동 버튼이 20% 커졌어요</p></li>
+        <li><span>🖼️</span><p><b>기록 카드</b> 스샷 저장이 기록 카드로 바뀌었어요. 코스 · 버틴 시간 · 신기록 여부가 한 장에 담겨요</p></li>
+        <li><span>🏠</span><p><b>화면 개편</b> 3D 로비, 밀어서 여닫는 하단 패널, 전자시계 · 디지털 계기판 HUD</p></li>
+        <li><span>✨</span><p><b>화면 단장</b> 새 글꼴과 아이콘, 버튼을 누르는 손맛과 효과음, 부드러워진 팝업과 숫자 연출</p></li>
+        <li><span>⚡</span><p><b>빨라진 첫 접속</b> 처음 받는 용량을 크게 줄이고 로딩 화면을 새로 만들었어요</p></li>
+        <li><span>🛡️</span><p><b>공정한 랭킹</b> 기록 검증이 강화되어 조작된 기록은 랭킹에 오르지 않아요</p></li>
+        <li><span>🔗</span><p><b>링크 미리보기</b> 카톡에 게임 주소를 보내면 게임 카드가 떠요</p></li>
+        <li><span>🐞</span><p><b>버그 수정 · 안정성</b> 고속 충돌 판정 누락과 배경음악 끊김을 고쳤어요. 3D 엔진을 게임 안에 넣어 더 안정적으로 실행돼요</p></li>
     </ul>
     <p class="pn-sign">오늘도 김부장의 잔소리를 피해 무사히 출근하세요! 🚗💨<br>지각해도 괜찮아요. 무한모드가 기다리고 있으니까요.</p>
-    <p class="pn-team"><b>HINT 2조</b><br>김창명 · 김홍기 · 박소희 · 신재현 · 정인채 · 홍의성 일동</p>`;
+    <p class="pn-team"><b>HINT 2조</b><br>김창명 · 김홍기 · 박소희 · 신재현 · 정인채 · 홍의성 드림</p>`;
 
 function showNotice() {
     if (!pendingNotice) return;
     const welcome = pendingNotice === 'welcome';
     const body = document.getElementById('noticeBody');
     document.getElementById('noticeIcon').textContent = welcome ? '🎁' : '📋';
-    document.getElementById('noticeTitle').textContent = welcome ? '어서 오세요!' : '패치노트 v26.11.07';
+    document.getElementById('noticeTitle').textContent = welcome ? '어서 오세요!' : '패치노트 ' + PATCH_VERSION;
     body.classList.toggle('patch-notes', !welcome);
     body.innerHTML = welcome
         ? '출근길·퇴근길·소풍길을 60초 동안 버텨보세요.<br>버틴 시간만큼 크레딧이 쌓여요.<br>차 지붕엔 <b class="text-white">반려동물</b>이 함께 타요!'

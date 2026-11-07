@@ -70,3 +70,7 @@
 .sh-time { display: inline-block; margin: 4px 0; font-family: var(--ft); font-size: 40px; color: #facc15; }
 .sh-btn { display: block; width: 100%; border: 0; border-radius: 12px; padding: 12px 0; margin-top: 8px; font-family: var(--ft); font-size: 17px; color: #111827; background: #fb923c; }
 .sh-btn.ghost { background: #374151; color: #e5e7eb; font-size: 14px; padding: 10px 0; }
+
+
+/* ===== 패치노트가 길어도 화면 안에서 스크롤 (확인 버튼은 항상 보이게) ===== */
+#noticeBody.patch-notes { max-height: calc(100dvh - 250px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; padding-right: 4px; }
