@@ -1,0 +1,52 @@
+/* 2단계 앱게임 느낌: 폰트 · 버튼 눌림 · 화면 전환 · 아이콘 */
+    /* ===== 게임 폰트 =====
+       --ft: 제목·숫자·큰 버튼용 / --fb: 설명·작은 글씨용 */
+    :root { --ft: 'Jua', 'Pretendard Variable', sans-serif;
+             --fb: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
+    html, body, button, input, textarea, select { font-family: var(--fb); }
+    h1, h2, h3, h4, .font-black, #lobbyTitle, .lb-tab, .lb-card b, .lb-go, .lb-gacha, .lb-adopt, .lb-modebtn,
+    .big-count, .adopt-box h3, .adopt-box button, .sp-title, #endScreen button.font-bold, .lb-pill b {
+        font-family: var(--ft) !important; font-weight: 400 !important; font-synthesis: none; letter-spacing: 0; }
+    .lb-tab small, .lb-go small, .lb-modebtn small, .lb-card span { font-family: var(--fb) !important; font-weight: 600 !important; }
+
+    /* ===== 버튼 눌림 효과 (모든 버튼 공통) =====
+       누르면 살짝 작아지고, 떼면 톡 튕기듯 돌아옴. scale 속성을 써서 버튼 위치(transform)와 충돌 안 함 */
+    button, .lb-pill, [role="button"] { scale: 1; transition: scale .22s cubic-bezier(.34, 1.8, .64, 1), filter .15s; }
+    button:active:not(:disabled):not(.locked), .lb-pill:active, [role="button"]:active { scale: .94; filter: brightness(.92); transition-duration: .06s; }
+    .lb-card:active:not(.locked), .lb-tab:active, .lb-modebtn:active:not(.locked) { scale: .97; }
+    .lb-go:active, .lb-gacha:active { scale: .96; }
+    #controls button:active { scale: .92; }
+    .lb-handle:active { scale: 1; filter: none; }
+
+    /* ===== 화면 전환 애니메이션 ===== */
+    @keyframes fxFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fxFadeOut { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes fxPopIn   { 0% { opacity: 0; transform: scale(.86) translateY(14px); } 65% { opacity: 1; transform: scale(1.025); } 100% { transform: scale(1); } }
+    @keyframes fxPopOut  { to { opacity: 0; transform: scale(.92) translateY(8px); } }
+    @keyframes fxUp      { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+    @keyframes fxDown    { from { opacity: 0; transform: translateY(-22px); } to { opacity: 1; transform: none; } }
+    @keyframes fxBump    { 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+    .fx-fade     { animation: fxFadeIn .22s ease-out both; }
+    .fx-fade > .fx-box { animation: fxPopIn .34s cubic-bezier(.2, .9, .3, 1.2) both; }
+    .fx-ghost    { pointer-events: none !important; animation: fxFadeOut .2s ease-in both; }
+    .fx-ghost > .fx-box { animation: fxPopOut .2s ease-in both; }
+    .fx-ghost-slow { pointer-events: none !important; animation: fxFadeOut .35s ease-in both; }
+    .fx-stagger > * { animation: fxUp .4s cubic-bezier(.2, .9, .3, 1) both; }
+    .fx-stagger > *:nth-child(2) { animation-delay: .06s; } .fx-stagger > *:nth-child(3) { animation-delay: .12s; }
+    .fx-stagger > *:nth-child(4) { animation-delay: .18s; } .fx-stagger > *:nth-child(5) { animation-delay: .24s; }
+    .fx-stagger > *:nth-child(n+6) { animation-delay: .3s; }
+    .fx-lobby .lb-sheet { animation: fxUp .38s cubic-bezier(.2, .9, .3, 1) both; }
+    .fx-lobby > :not(.lb-sheet) { animation: fxFadeIn .35s ease-out both; }
+    .fx-down { animation: fxDown .35s cubic-bezier(.2, .9, .3, 1) both; }
+    .fx-up   { animation: fxUp .35s cubic-bezier(.2, .9, .3, 1) both; }
+    .fx-bump { display: inline-block; animation: fxBump .35s ease-out; }
+    @media (prefers-reduced-motion: reduce) { [class*="fx-"], [class*="fx-"] > * { animation: none !important; } }
+
+    /* ===== 아이콘 (이모지 대신 어느 폰에서나 똑같이 보이는 선 아이콘) ===== */
+    .ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; display: inline-block;
+          fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    .ic.big { width: 1.35em; height: 1.35em; vertical-align: -0.28em; }
+    .ic.gold { color: #facc15; }
+    .lb-rank .ic { color: #422006; }
+    .lb-card.locked .ic, .lb-modebtn.locked .ic { opacity: .75; }
+    .dash-shield .ic { color: #6ee7b7; width: 13px; height: 13px; }
