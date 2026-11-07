@@ -341,6 +341,32 @@
         #controls button:active { scale: .92; }
         .lb-handle:active { scale: 1; filter: none; }
     </style>
+
+    <style id="screen-fx">
+        /* ===== 화면 전환 애니메이션 ===== */
+        @keyframes fxFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fxFadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes fxPopIn   { 0% { opacity: 0; transform: scale(.86) translateY(14px); } 65% { opacity: 1; transform: scale(1.025); } 100% { transform: scale(1); } }
+        @keyframes fxPopOut  { to { opacity: 0; transform: scale(.92) translateY(8px); } }
+        @keyframes fxUp      { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+        @keyframes fxDown    { from { opacity: 0; transform: translateY(-22px); } to { opacity: 1; transform: none; } }
+        @keyframes fxBump    { 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+        .fx-fade     { animation: fxFadeIn .22s ease-out both; }
+        .fx-fade > .fx-box { animation: fxPopIn .34s cubic-bezier(.2, .9, .3, 1.2) both; }
+        .fx-ghost    { pointer-events: none !important; animation: fxFadeOut .2s ease-in both; }
+        .fx-ghost > .fx-box { animation: fxPopOut .2s ease-in both; }
+        .fx-ghost-slow { pointer-events: none !important; animation: fxFadeOut .35s ease-in both; }
+        .fx-stagger > * { animation: fxUp .4s cubic-bezier(.2, .9, .3, 1) both; }
+        .fx-stagger > *:nth-child(2) { animation-delay: .06s; } .fx-stagger > *:nth-child(3) { animation-delay: .12s; }
+        .fx-stagger > *:nth-child(4) { animation-delay: .18s; } .fx-stagger > *:nth-child(5) { animation-delay: .24s; }
+        .fx-stagger > *:nth-child(n+6) { animation-delay: .3s; }
+        .fx-lobby .lb-sheet { animation: fxUp .38s cubic-bezier(.2, .9, .3, 1) both; }
+        .fx-lobby > :not(.lb-sheet) { animation: fxFadeIn .35s ease-out both; }
+        .fx-down { animation: fxDown .35s cubic-bezier(.2, .9, .3, 1) both; }
+        .fx-up   { animation: fxUp .35s cubic-bezier(.2, .9, .3, 1) both; }
+        .fx-bump { display: inline-block; animation: fxBump .35s ease-out; }
+        @media (prefers-reduced-motion: reduce) { [class*="fx-"], [class*="fx-"] > * { animation: none !important; } }
+    </style>
 </head>
 <body>
 <!-- ===== 로딩 화면 (게임이 준비되면 자동으로 사라짐) ===== -->
@@ -5143,6 +5169,79 @@
         tick(big);
         if (big && navigator.vibrate) try { navigator.vibrate(12); } catch (er) {}
     }, true);
+})();
+</script>
+<script>
+/* ===== 화면 전환 + 숫자 카운트업 =====
+   게임 코드가 화면을 보이거나(hidden 제거) 숨길 때(hidden 추가)를 지켜보다가 애니메이션만 덧입힘.
+   - 나타날 때: 팝업은 살짝 커지며 등장, 결과 화면은 위로 차례차례, 로비 패널은 아래에서 올라옴
+   - 사라질 때: 화면은 즉시 숨기고(게임 동작 그대로), 똑같이 생긴 '잔상'을 0.2초 동안 흐리게 지움 */
+(function () {
+    var POPUP = ['noticeModal', 'nickModal', 'rankModal', 'adoptModal'];   // 상자가 튀어나오는 팝업
+    var FADE  = ['gachaModal'];                                            // 자체 연출이 있어서 배경만 페이드
+    function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+    function once(el, cls, ms) { restart(el, cls); setTimeout(function () { el.classList.remove(cls); }, ms); }
+    function ghost(el, cls, ms) {   // 사라진 화면의 잔상을 잠깐 보여주며 흐리게
+        try {
+            var g = el.cloneNode(true);
+            g.removeAttribute('id'); g.querySelectorAll('[id]').forEach(function (n) { n.removeAttribute('id'); });
+            g.classList.remove('hidden', 'fx-fade', 'fx-stagger', 'fx-lobby'); g.classList.add(cls);
+            g.querySelectorAll('canvas').forEach(function (c) { c.style.visibility = 'hidden'; });
+            g.setAttribute('aria-hidden', 'true');
+            el.parentNode.insertBefore(g, el.nextSibling);
+            setTimeout(function () { g.remove(); }, ms);
+        } catch (e) {}
+    }
+    function onShow(id, el) {
+        if (POPUP.indexOf(id) >= 0) { if (el.firstElementChild) el.firstElementChild.classList.add('fx-box'); once(el, 'fx-fade', 400); }
+        else if (FADE.indexOf(id) >= 0) once(el, 'fx-fade', 300);
+        else if (id === 'endScreen') once(el, 'fx-stagger', 800);
+        else if (id === 'lobbyScreen') once(el, 'fx-lobby', 500);
+        else if (id === 'hud') once(el, 'fx-down', 400);
+        else if (id === 'controls') once(el, 'fx-up', 400);
+    }
+    function onHide(id, el) {
+        if (POPUP.indexOf(id) >= 0 || FADE.indexOf(id) >= 0) ghost(el, 'fx-ghost', 220);
+        else if (id === 'endScreen' || id === 'lobbyScreen') ghost(el, 'fx-ghost-slow', 380);
+    }
+    var WATCH = POPUP.concat(FADE, ['endScreen', 'lobbyScreen', 'hud', 'controls']);
+    var mo = new MutationObserver(function (list) {
+        list.forEach(function (m) {
+            var el = m.target, was = (m.oldValue || '').split(/\s+/).indexOf('hidden') >= 0, now = el.classList.contains('hidden');
+            if (was && !now) onShow(el.id, el); else if (!was && now) onHide(el.id, el);
+        });
+    });
+    WATCH.forEach(function (id) { var el = document.getElementById(id); if (el) mo.observe(el, { attributes: true, attributeFilter: ['class'], attributeOldValue: true }); });
+
+    /* ----- 숫자 카운트업: 크레딧·버틴 시간이 바뀌면 촤라락 올라감 ----- */
+    var busy = {};
+    function countUp(el, from, to, fmt, dur) {
+        var key = el.id, t0 = performance.now();
+        busy[key] = true;
+        (function step(now) {
+            var k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+            el.textContent = fmt(from + (to - from) * e);
+            if (k < 1) requestAnimationFrame(step); else { el.textContent = fmt(to); busy[key] = false; }
+        })(t0);
+    }
+    function watchNumber(id, parse, fmt, dur, bumpEl) {
+        var el = document.getElementById(id); if (!el) return;
+        var last = parse(el.textContent);
+        new MutationObserver(function () {
+            if (busy[id]) return;
+            var v = parse(el.textContent);
+            if (isNaN(v) || isNaN(last) || v === last) { last = v; return; }
+            var from = id === 'lobbyCredit' ? last : 0;   // 크레딧은 이전 값에서, 결과 숫자는 0부터
+            last = v;
+            if (id === 'lobbyCredit' && v < from) return;  // 쓸 때(감소)는 바로 표시
+            countUp(el, from, v, fmt, dur);
+            if (bumpEl) setTimeout(function () { once(bumpEl(), 'fx-bump', 400); }, dur);
+        }).observe(el, { childList: true, characterData: true, subtree: true });
+    }
+    var num = function (s) { var m = String(s).replace(/,/g, '').match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; };
+    watchNumber('lobbyCredit', num, function (v) { return String(Math.round(v)); }, 600, function () { return document.getElementById('lobbyCredit'); });
+    watchNumber('finalTime', num, function (v) { return v.toFixed(1) + 's'; }, 650, function () { return document.getElementById('finalTime'); });
+    watchNumber('earnedCredit', num, function (v) { return '+' + Math.round(v) + ' C'; }, 700, null);
 })();
 </script>
 </body>
