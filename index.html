@@ -44,7 +44,8 @@
         @supports (height: 100dvh) { body, html { height: 100dvh; } }
         #controls { bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)) !important; }
         #hud { padding-top: calc(1rem + env(safe-area-inset-top, 0px)); }
-        #muteBtn { top: calc(0.75rem + env(safe-area-inset-top, 0px)); }
+        #muteBtn { top: calc(0.75rem + env(safe-area-inset-top, 0px)); background: rgba(14,18,24,0.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            border: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.22); }
         #lobbyScreen { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
         /* 길게 눌렀을 때 뜨는 복사/확대 메뉴, 파란 터치 하이라이트 제거 */
         button, canvas { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
@@ -179,17 +180,16 @@
         .admin-days b { font-weight: 600; font-size: 11px; color: #cbd5e1; }
 
         /* 패치노트 (업데이트 안내 창) */
-        .patch-notes { text-align: left; word-break: keep-all; overflow-wrap: break-word; max-height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px 6px 4px 2px; margin-bottom: 10px !important;
-            border-top: 1px solid #374151; border-bottom: 1px solid #374151; }
-        .patch-notes .pn-sub { text-align: center; color: #9ca3af; font-size: 12.5px; font-weight: 700; margin: 8px 0 2px; }
-        .patch-notes h4 { color: #fcd34d; font-weight: 900; font-size: 14px; margin: 12px 0 4px; }
-        .patch-notes ul { margin: 0; padding-left: 17px; list-style: disc; }
-        .patch-notes li { margin: 3px 0; font-size: 12.5px; color: #d1d5db; line-height: 1.5; }
-        .patch-notes li::marker { color: #6b7280; }
-        .patch-notes b { color: #fff; }
-        .patch-notes .pn-sign { text-align: center; margin: 16px 0 8px; font-size: 12.5px; color: #d1d5db; line-height: 1.6; }
-        .patch-notes .pn-team { text-align: center; margin: 0 0 6px; font-size: 12px; color: #9ca3af; line-height: 1.6; }
-        .patch-notes .pn-team b { color: #fcd34d; font-size: 13px; }
+        .patch-notes { text-align: left; word-break: keep-all; overflow-wrap: break-word; max-height: none; padding: 0 2px; margin-bottom: 8px !important; }
+        .patch-notes .pn-sub { text-align: center; color: #9ca3af; font-size: 12px; font-weight: 700; margin: 0 0 8px; }
+        .patch-notes .pn-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+        .patch-notes .pn-list li { display: flex; gap: 8px; align-items: flex-start; }
+        .patch-notes .pn-list span { flex: none; width: 20px; text-align: center; font-size: 15px; line-height: 1.3; }
+        .patch-notes .pn-list p { margin: 0; font-size: 12px; line-height: 1.45; color: #d1d5db; }
+        .patch-notes .pn-list b { color: #fcd34d; font-weight: 900; margin-right: 4px; }
+        .patch-notes .pn-sign { text-align: center; margin: 12px 0 6px; font-size: 12px; color: #d1d5db; line-height: 1.55; }
+        .patch-notes .pn-team { text-align: center; margin: 0; font-size: 11.5px; color: #9ca3af; line-height: 1.55; }
+        .patch-notes .pn-team b { color: #fcd34d; font-size: 12.5px; }
 
         /* 보유 반려동물 카드: 오른쪽 위 ✏️ 이름 바꾸기 */
         .lb-petwrap { position: relative; display: grid; min-width: 0; }
@@ -224,9 +224,38 @@
         .lb-card:focus-visible, .lb-go:focus-visible, .lb-tab:focus-visible, .lb-adopt:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
 
         /* ===== 주행: 현재 시각 · 남은 시간 알림 · 마지막 카운트다운 ===== */
-        .hud-clock { color: #fff; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 26px; font-weight: 900; letter-spacing: 0.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
-        .hud-clock.late { color: #f87171; }
-        .hud-sub { margin-top: 3px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; color: #fde047; white-space: nowrap; }
+        /* ===== HUD: 하얀 테두리 탁상시계 스타일 (레퍼런스: 흰 프레임 · 까만 유광 화면 · 흰빛 7세그먼트) ===== */
+        .hud-col { display: flex; flex-direction: column; gap: 5px; }
+        .hud-col.left { align-items: flex-start; } .hud-col.right { align-items: flex-end; }
+        /* 스모크 유리: 아래 ◀ ▶ 버튼 · 소리 버튼과 같은 말투 (어두운 반투명 + 흐림 + 얇은 흰 테두리) */
+        .glass { background: rgba(14,18,24,0.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.22); }
+        .seg-device { width: 8.6rem; height: 4.3rem; box-sizing: border-box; padding: 3px; border-radius: 13px;
+            background: rgba(14,18,24,0.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.22); }
+        .seg-screen { position: relative; width: 100%; height: 100%; box-sizing: border-box; border-radius: 10px; overflow: hidden;
+            background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; color: #e4ecff; }
+        .seg-digits { display: block; line-height: 0; filter: drop-shadow(0 0 1.5px rgba(190,210,255,0.7)) drop-shadow(0 0 6px rgba(130,160,255,0.22)); }
+        .seg-digits svg { height: 26px; width: auto; display: block; overflow: visible; }
+        .seg-digits.speed svg { height: 30px; }
+        .seg-digits .s { fill: currentColor; opacity: 0.035; transition: opacity 0.08s; }   /* 꺼진 칸은 거의 안 보이게 */
+        .seg-digits .s.on { opacity: 1; }
+        .seg-digits.late { color: #ffc2c2; filter: drop-shadow(0 0 1.5px rgba(255,90,90,0.85)) drop-shadow(0 0 6px rgba(255,60,60,0.3)); }   /* 지각 임박 · 지각 모드 */
+        .seg-unit { position: absolute; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 8px; letter-spacing: 0.06em; color: rgba(220,230,255,0.55); line-height: 1; }
+        .seg-unit.tl { top: 6px; left: 7px; } .seg-unit.br { bottom: 6px; right: 8px; }
+        .seg-bar { position: absolute; left: 8px; right: 34px; bottom: 7px; height: 2px; border-radius: 1px; background: rgba(228,236,255,0.1); overflow: hidden; }
+        .seg-bar span { display: block; height: 100%; width: 0; background: #e4ecff; box-shadow: 0 0 4px rgba(175,198,255,0.9); transition: width 0.2s; }
+        .seg-bar.hot span { background: #ffb4b4; box-shadow: 0 0 4px rgba(255,90,90,0.9); }
+        .dash-sub { display: flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 8px;
+            background: rgba(14,18,24,0.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+            font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.65); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .dash-sub b { font-weight: 900; color: #fff; }
+        .dash-sub i { width: 1px; height: 10px; background: rgba(255,255,255,0.25); }
+        .dash-under { display: flex; gap: 4px; align-items: center; }
+        .dash-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #f4f4f2; display: flex; align-items: center; justify-content: center;
+            font-family: 'Inter', sans-serif; font-weight: 900; font-size: 9.5px; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+        .dash-dot.hidden, .dash-shield.hidden { display: none; }   /* 숨김이 위의 display:flex에 덮이지 않게 */
+        .dash-shield { height: 20px; padding: 0 6px; border-radius: 10px; background: rgba(6,78,59,0.85); border: 1px solid #34d399; font-size: 11px; display: flex; align-items: center; }
         .time-banner { position: absolute; left: 50%; top: calc(13.5rem + env(safe-area-inset-top, 0px)); z-index: 31; transform: translate(-50%, -12px) scale(0.96);
             padding: 9px 18px; border-radius: 14px; background: rgba(17,24,39,0.92); border: 2px solid #fbbf24; color: #fff; font-weight: 900; font-size: 17px;
             white-space: nowrap; opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
@@ -246,14 +275,21 @@
         .adopt-modal.hidden { display: none; }
         /* 반려동물 대화창: 왼쪽 고정 (주행 중엔 현재 시각 아래, 로비에선 제목 아래) — 오른쪽 잔소리 팝업과 마주 보는 구도 */
         .pet-bubble { position: absolute; left: 12px; top: calc(8.75rem + env(safe-area-inset-top, 0px)); z-index: 41; pointer-events: none;
-            display: flex; align-items: flex-start; gap: 8px; max-width: 56%; opacity: 0; transform: translateX(-24px); transition: opacity 0.3s, transform 0.3s; }
+            display: flex; align-items: flex-start; gap: 6px; max-width: 43%; opacity: 0; transform: translateX(-24px); transition: opacity 0.3s, transform 0.3s; }
         #lobbyScreen:not(.hidden) ~ .pet-bubble { top: calc(148px + env(safe-area-inset-top, 0px)); }
         .pet-bubble.on { opacity: 1; transform: none; }
-        .pet-bubble .face { flex: none; width: 44px; height: 44px; border-radius: 50%; background: #fff7e6; border: 3px solid #f59e0b; display: grid; place-items: center; font-size: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-        .pet-bubble .msg { background: #fff; color: #111827; border-radius: 4px 14px 14px 14px; padding: 7px 11px; font-size: 12.5px; line-height: 1.35; box-shadow: 0 6px 16px rgba(0,0,0,0.3); min-width: 0; }
-        .pet-bubble .who { display: block; font-size: 10.5px; font-weight: 800; color: #d97706; margin-bottom: 1px; }
-        .pet-bubble b { font-weight: 900; font-size: 14px; }
-        .pet-bubble i { display: block; font-style: normal; color: #4b5563; font-size: 12px; }
+        /* 잔소리 팝업: 반려동물 말풍선과 같은 말투 (반투명 · 같은 글자 크기 · 같은 모서리) */
+        #characterPopup { gap: 6px; }
+        #characterPopup .char-msg { max-width: 150px; background: rgba(255,255,255,0.72); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+            border-radius: 11px 3px 11px 11px; padding: 6px 9px; font-size: 11.2px; font-weight: 900; line-height: 1.35; box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+        #characterPopup .char-face { width: 40px; height: 40px; background: rgba(255,255,255,0.82); border-width: 2.5px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+        #characterPopup .char-face #charName { font-size: 10px; }
+        /* 말풍선은 반투명 + 기존의 약 80% 크기 (도로를 덜 가리게) */
+        .pet-bubble .face { flex: none; width: 35px; height: 35px; border-radius: 50%; background: rgba(255,247,230,0.82); border: 2.5px solid rgba(245,158,11,0.85); display: grid; place-items: center; font-size: 18px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+        .pet-bubble .msg { background: rgba(255,255,255,0.72); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); color: #111827; border-radius: 3px 11px 11px 11px; padding: 5.5px 9px; font-size: 10px; line-height: 1.35; box-shadow: 0 4px 12px rgba(0,0,0,0.18); min-width: 0; }
+        .pet-bubble .who { display: block; font-size: 8.5px; font-weight: 800; color: #b45309; margin-bottom: 1px; }
+        .pet-bubble b { font-weight: 900; font-size: 11.2px; }
+        .pet-bubble i { display: block; font-style: normal; color: #374151; font-size: 9.6px; }
         .adopt-box { width: 100%; max-width: 340px; background: #111827; border: 1px solid #374151; border-radius: 18px; padding: 22px 18px 18px; text-align: center; color: #fff; display: grid; gap: 10px; }
         .adopt-box h3 { margin: 0; font-size: 21px; font-weight: 900; }
         .adopt-box p { margin: 0; font-size: 13px; color: #9ca3af; line-height: 1.5; }
@@ -316,30 +352,35 @@
     </div>
 
     <!-- 2. 게임 중 HUD -->
+    <!-- HUD: 하얀 테두리 + 까만 화면 + 7세그먼트 숫자 (왼쪽 탁상 전자시계 · 오른쪽 같은 디자인의 속도계) -->
     <div id="hud" class="absolute top-0 left-0 w-full p-4 flex justify-between items-start pointer-events-none hidden z-20">
-        <div class="flex flex-col gap-2">
-            <div class="bg-black bg-opacity-70 px-3 py-2 rounded-lg border border-gray-700 flex flex-col items-center">
-                <span class="text-gray-400 text-xs font-bold mb-1">현재 시각</span>
-                <span id="clockDisplay" class="hud-clock">08:59:00</span>
-                <span class="hud-sub">버틴 <span id="timeDisplay">0.0s</span></span><span class="hud-sub" id="hudBest" style="margin-top:0">최고 0.0s</span>
+        <div class="hud-col left">
+            <div class="seg-device">
+                <div class="seg-screen">
+                    <span id="clockAmPm" class="seg-unit tl">AM</span>
+                    <span id="clockDisplay" class="seg-digits" role="timer" aria-label="현재 시각"></span>
+                    <span id="clockGoal" class="hidden"></span>
+                </div>
             </div>
-
-            <div id="shieldIcon" class="hidden bg-emerald-900 bg-opacity-80 px-2 py-1 rounded border border-emerald-500 text-emerald-300 text-xs font-bold text-center">
-                🛡️ 쉴드 ON
-            </div>
+            <div class="dash-sub"><span>버틴 <b id="timeDisplay">0.0s</b></span><i></i><span id="hudBest">최고 0.0s</span></div>
         </div>
 
-        <div class="flex flex-col items-end gap-2">
-            <div class="bg-black bg-opacity-70 px-3 py-2 rounded-lg border border-gray-700 flex flex-col items-end">
-                <span class="text-gray-400 text-xs font-bold mb-1">SPEED</span>
-                <span id="speedDisplay" class="text-red-400 font-mono text-xl font-bold">100km/h</span>
+        <div class="hud-col right">
+            <div class="seg-device">
+                <div class="seg-screen">
+                    <span id="speedDisplay" class="seg-digits speed" aria-label="속도"></span>
+                    <span class="seg-unit br">km/h</span>
+                    <div class="seg-bar" id="speedBar" aria-hidden="true"></div>
+                </div>
             </div>
-
-            <!-- 점프 인디케이터 -->
-            <div id="jumpContainer" class="flex gap-1 mt-1">
-                <div class="jump-dot w-6 h-6 rounded-full bg-blue-600 border border-white flex items-center justify-center text-xs font-bold text-white">J</div>
-                <div class="jump-dot w-6 h-6 rounded-full bg-blue-600 border border-white flex items-center justify-center text-xs font-bold text-white">J</div>
-                <div class="jump-dot w-6 h-6 rounded-full bg-blue-600 border border-white flex items-center justify-center text-xs font-bold text-white hidden" id="jump3">J</div>
+            <!-- 쉴드 · 점프(J) · 감속(S) 남은 횟수 -->
+            <div class="dash-under">
+                <div id="shieldIcon" class="hidden dash-shield">🛡️</div>
+                <div id="jumpContainer" class="flex gap-1">
+                    <div class="jump-dot dash-dot bg-blue-600">J</div>
+                    <div class="jump-dot dash-dot bg-blue-600">J</div>
+                    <div class="jump-dot dash-dot bg-blue-600 hidden" id="jump3">J</div>
+                </div>
             </div>
         </div>
     </div>
@@ -372,11 +413,12 @@
     </div>
 
     <!-- 캐릭터 잔소리 팝업 -->
-    <div id="characterPopup" class="absolute top-20 right-4 flex items-start gap-2 opacity-0 translate-x-10 transition-all duration-500 ease-out pointer-events-none z-30">
-        <div class="bg-white bg-opacity-95 text-black p-3 rounded-2xl rounded-tr-none shadow-xl border-2 border-gray-300 text-sm font-black max-w-[180px] break-keep">
+    <!-- 잔소리 팝업: HUD 박스들 바로 아래 · 오른쪽 절반 (반려동물 말풍선은 왼쪽 절반) -->
+    <div id="characterPopup" class="absolute right-4 flex items-start gap-2 opacity-0 translate-x-10 transition-all duration-500 ease-out pointer-events-none z-30" style="top: calc(7.9rem + env(safe-area-inset-top, 0px));">
+        <div class="char-msg text-black break-keep">
             <span id="charMsg"></span>
         </div>
-        <div id="charProfile" class="w-14 h-14 rounded-full border-2 shadow-lg shrink-0 overflow-hidden bg-gray-200 flex items-center justify-center">
+        <div id="charProfile" class="char-face w-14 h-14 rounded-full border-2 shadow-lg shrink-0 overflow-hidden bg-gray-200 flex items-center justify-center">
             <span id="charName" class="font-black text-xs"></span>
         </div>
     </div>
@@ -614,44 +656,17 @@
     // 기존 플레이어가 새 버전에 처음 들어올 때 1번 보여주는 패치노트
     const PATCH_NOTES_HTML = `
         <p class="pn-sub">반려동물 &amp; 무한모드 업데이트</p>
-        <h4>🐾 반려동물 추가</h4>
-        <ul>
-            <li>차 지붕에 반려동물을 태우고 달릴 수 있습니다.</li>
-            <li>웰시코기는 기본으로 지급되며, 치즈냥 · 햄스터 · 토끼 · 앵무새 · 거북이는 크레딧으로 입양할 수 있습니다.</li>
-            <li>반려동물마다 입양 조건이 있으며, 조건을 달성하면 <b>반값</b>에 입양할 수 있습니다.</li>
-            <li>반려동물이 주행 중 상황에 맞춰 말풍선으로 반응합니다.</li>
-            <li>✏️ 버튼으로 반려동물의 이름을 언제든 바꿀 수 있습니다.</li>
+        <ul class="pn-list">
+            <li><span>🐾</span><p><b>반려동물</b> 차 위에 반려동물을 태우고 달릴 수 있어요. 이름도 지어줄 수 있어요!</p></li>
+            <li><span>♾️</span><p><b>무한모드</b> 코스를 깨면 열려요. 60초가 지나면 지각 모드가 시작돼요!</p></li>
+            <li><span>👑</span><p><b>명예의 전당</b> 무한모드에서 오래 버틴 순서로 순위가 매겨져요.</p></li>
+            <li><span>🏠</span><p><b>화면 변경</b> 메뉴 화면과 게임 화면이 새롭게 바뀌었어요.</p></li>
+            <li><span>⚖️</span><p><b>밸런스</b> 타임 컨트롤러 능력은 한 판에 2번까지 쓸 수 있어요. 좌우 버튼이 더 커졌어요.</p></li>
+            <li><span>🛡️</span><p><b>공정한 순위</b> 기록을 조작하면 순위에 올라가지 않아요.</p></li>
+            <li><span>🐞</span><p><b>버그 수정</b> 차를 그냥 통과하던 문제와 음악이 끊기던 문제를 고쳤어요.</p></li>
         </ul>
-        <h4>♾️ 무한모드 추가</h4>
-        <ul>
-            <li>코스를 60초 클리어하면 해당 코스의 무한모드가 열립니다.</li>
-            <li>09시가 지나면 <b>지각 모드</b>에 돌입합니다. 빨간 시계가 계속 흐르고, 배경음악이 빨라지며, 차량이 3대씩 몰려오는 패턴이 등장합니다.</li>
-            <li>무한모드 크레딧은 60초까지만 지급됩니다.</li>
-        </ul>
-        <h4>👑 명예의 전당 개편</h4>
-        <ul>
-            <li>무한모드 기록 순으로 정렬됩니다.</li>
-            <li>신기록을 달성하면 명예의 전당 이름을 바꿀 수 있습니다.</li>
-        </ul>
-        <h4>🏠 로비 · 주행 화면 개편</h4>
-        <ul>
-            <li>차량과 반려동물을 3D로 감상할 수 있는 새 로비가 적용됩니다.</li>
-            <li>하단 패널을 위아래로 스와이프해서 열고 닫을 수 있습니다.</li>
-            <li>출발할 때 카메라가 차량 뒤로 이동하는 연출이 추가됩니다.</li>
-            <li>주행 화면에 "현재 시각" 시계와 남은 시간 알림이 추가됩니다.</li>
-        </ul>
-        <h4>⚖️ 밸런스 조정</h4>
-        <ul>
-            <li><b>타임 컨트롤러:</b> 감속 능력이 쿨타임 15초에서 <b>판당 2회</b>로 변경됩니다.</li>
-            <li><b>좌우 이동 버튼:</b> 크기가 20% 커집니다.</li>
-        </ul>
-        <h4>🐞 버그 수정</h4>
-        <ul>
-            <li>고속 주행 중 충돌이 판정되지 않고 차량을 통과하던 문제를 수정했습니다.</li>
-            <li>배경음악이 반복될 때 몇 초간 소리가 끊기던 문제를 수정했습니다.</li>
-        </ul>
-        <p class="pn-sign">오늘도 김부장의 잔소리를 피해 무사히 출근하시길 바랍니다. 🚗💨<br>지각해도 괜찮아요. 무한모드가 기다리고 있으니까요!</p>
-        <p class="pn-team"><b>HINT 2조</b><br>김창명 · 김홍기 · 박소희 · 신재현 · 정인채 · 홍의성 드림</p>`;
+        <p class="pn-sign">오늘도 김부장의 잔소리를 피해 무사히 출근하세요! 🚗💨<br>지각해도 괜찮아요. 무한모드가 기다리고 있으니까요.</p>
+        <p class="pn-team"><b>HINT 2조</b><br>김창명 · 김홍기 · 박소희 · 신재현 · 정인채 · 홍의성 일동</p>`;
 
     function showNotice() {
         if (!pendingNotice) return;
@@ -746,10 +761,8 @@
     }
     const rpc = (fn, args) => sb('rpc/' + fn, { body: args });
     const fetchTop = course => sb(`time_records?select=nickname,tag,seconds,car,updated_at&course=eq.${course}&order=seconds.desc,updated_at.asc&limit=10`);
-    // 명예의 전당: 무한모드 기록 높은 순 (무한모드를 안 했으면 60.0초), 같으면 그 기록을 먼저 세운 순
-    // 날짜는 무한모드 기록을 갱신한 시각(endless_at), 갱신한 적 없으면 클리어 시각. endless_at 읽기 권한이 없으면 예전 방식으로 불러옴
-    const fetchFame = course => sb(`hall_of_fame?select=id,fame_name,nickname,tag,car,cleared_at,endless_at,endless_best&course=eq.${course}&order=endless_best.desc,endless_at.asc.nullslast,cleared_at.asc,id.asc&limit=1000`)
-        .catch(() => sb(`hall_of_fame?select=id,fame_name,nickname,tag,car,cleared_at,endless_best&course=eq.${course}&order=endless_best.desc,cleared_at.asc,id.asc&limit=1000`));
+    // 명예의 전당: 무한모드 기록 높은 순 (무한모드를 안 했으면 60.0초), 같으면 먼저 클리어한 순
+    const fetchFame = course => sb(`hall_of_fame?select=id,fame_name,nickname,tag,car,cleared_at,endless_best&course=eq.${course}&order=endless_best.desc,cleared_at.asc,id.asc&limit=1000`);
     const fetchMyRank = course => rpc('my_time_rank', { p_device: userData.deviceId, p_course: course }).then(r => (r && r[0]) || null);
 
     /* ---- 판 검증 (기록 조작 방어) ----
@@ -859,10 +872,10 @@
             const me = r.nickname === userData.nickname && r.tag === userData.tag;
             // 한 줄: 순위 · 차량 색 점 · 이름 · 날짜 · 기록
             return `<li class="flex items-center gap-2 px-2 py-1.5 rounded ${me ? 'bg-yellow-900 bg-opacity-50 text-yellow-200' : 'text-gray-200'}">
-                <span class="shrink-0 text-yellow-400 font-mono text-xs w-8 text-center">${i + 1}</span>
+                <span class="shrink-0 text-yellow-400 font-mono text-xs w-9">No.${i + 1}</span>
                 ${carDotHtml(r.car)}
                 <span class="truncate min-w-0 flex-1 ${me ? 'font-bold' : ''}">${esc(r.fame_name)}</span>
-                <span class="font-mono text-xs text-gray-500 shrink-0">${fmtShortDateTime(r.endless_at || r.cleared_at)}</span>
+                <span class="font-mono text-xs text-gray-500 shrink-0">${fmtShortDateTime(r.cleared_at)}</span>
                 <span class="font-mono font-bold text-yellow-300 shrink-0">${fmtTime(r.endless_best != null ? r.endless_best : 60)}</span></li>`;
         }).join('') + '</ol>';
     }
@@ -3021,7 +3034,48 @@
     const textCache = {};
     function setText(id, txt) {
         if (textCache[id] === txt) return;
-        textCache[id] = txt; document.getElementById(id).textContent = txt;
+        textCache[id] = txt;
+        const el = document.getElementById(id);
+        if (el._seg) segSet(el, txt); else el.textContent = txt;   // 7세그먼트 화면이면 칸만 켜고 끔
+    }
+
+    /* ---- 7세그먼트 숫자 (SVG로 직접 그림: 폰트 없이 탁상 전자시계처럼 또렷하게) ----
+       segInit(el, '88:88:88') 로 틀을 만들고, setText(id, '08:59:16') 로 칸을 켬 */
+    const SEG_W = 10.4, SEG_H = 18, SEG_T = 2.4, SEG_G = 0.42, SEG_GAP = 3, SEG_COLON = 4.4;
+    const SEG_MAP = { '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc', '5': 'afgcd', '6': 'afgedc', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg', ' ': '', '-': 'g' };
+    function segPaths(ox) {
+        const t = SEG_T, h2 = t / 2, g = SEG_G, w = SEG_W, h = SEG_H;
+        const hz = yc => { const x1 = ox + g + h2, x2 = ox + w - g - h2; return `${x1},${yc} ${x1 + h2},${yc - h2} ${x2 - h2},${yc - h2} ${x2},${yc} ${x2 - h2},${yc + h2} ${x1 + h2},${yc + h2}`; };
+        const vt = (xc, y1, y2) => `${xc},${y1} ${xc + h2},${y1 + h2} ${xc + h2},${y2 - h2} ${xc},${y2} ${xc - h2},${y2 - h2} ${xc - h2},${y1 + h2}`;
+        const L = ox + h2, R = ox + w - h2, M = h / 2;
+        return { a: hz(h2), g: hz(M), d: hz(h - h2), f: vt(L, h2 + g, M - g), b: vt(R, h2 + g, M - g), e: vt(L, M + g, h - h2 - g), c: vt(R, M + g, h - h2 - g) };
+    }
+    function segInit(el, pattern) {
+        let x = 0, svg = '';
+        const cells = [];
+        for (const ch of pattern) {
+            if (ch === ':') {
+                const cx = x + SEG_COLON / 2 - SEG_GAP / 2;
+                svg += `<circle class="s on" cx="${cx}" cy="${SEG_H * 0.32}" r="${SEG_T * 0.62}"/><circle class="s on" cx="${cx}" cy="${SEG_H * 0.68}" r="${SEG_T * 0.62}"/>`;
+                cells.push(null); x += SEG_COLON;
+            } else {
+                const ps = segPaths(x);
+                svg += Object.entries(ps).map(([k, pts]) => `<polygon class="s" data-k="${k}" data-i="${cells.length}" points="${pts}"/>`).join('');
+                cells.push(true); x += SEG_W + SEG_GAP;
+            }
+        }
+        const W = x - SEG_GAP;
+        el.innerHTML = `<svg viewBox="-1 -1 ${W + 2} ${SEG_H + 2}" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+        el._seg = cells.map((c, i) => c ? [...el.querySelectorAll(`polygon[data-i="${i}"]`)].reduce((o, p) => (o[p.dataset.k] = p, o), {}) : null);
+        el._segLen = cells.length;
+    }
+    function segSet(el, txt) {
+        const chars = String(txt).padStart(el._segLen, ' ').slice(-el._segLen);
+        el._seg.forEach((cell, i) => {
+            if (!cell) return;
+            const on = SEG_MAP[chars[i]] || '';
+            for (const k in cell) cell[k].classList.toggle('on', on.includes(k));
+        });
     }
     function showCount(text, color) {
         const el = document.getElementById('countText');
@@ -3676,7 +3730,7 @@
         const qKey = selectedTheme + ':' + QUOTES[selectedTheme].indexOf(q);
         if (!userData.stats.quotes.includes(qKey)) userData.stats.quotes.push(qKey);
         nameEl.textContent = charInfo.name;
-        profileEl.className = `w-14 h-14 rounded-full border-2 shadow-lg shrink-0 overflow-hidden bg-gray-100 flex items-center justify-center ${charInfo.color}`;
+        profileEl.className = `char-face w-14 h-14 rounded-full border-2 shadow-lg shrink-0 overflow-hidden bg-gray-100 flex items-center justify-center ${charInfo.color}`;
 
         popup.classList.remove('opacity-0', 'translate-x-10');
         popup.classList.add('opacity-100', 'translate-x-0');
@@ -4300,6 +4354,7 @@
             petSay('win', true);
             setText('clockDisplay', pad2(COURSE_INFO[selectedTheme].startH + 1) + ':00:00');
             document.getElementById('clockDisplay').classList.remove('late');
+            setText('clockGoal', '✓ 도착'); document.getElementById('clockGoal').parentElement.classList.remove('late');
             successAnimTimer = 0;
 
             // 남은 적 모두 제거
@@ -4347,7 +4402,7 @@
 
         // 속도 계산 (테마 적용)
         roadSpeed = (120 + Math.min(gameTime, 60) * 2) * tConfig.speedMult;   // 무한모드: 60초 때 속도 그대로 유지
-        setText('speedDisplay', Math.floor(roadSpeed) + "km/h");
+        updateSpeedHud(roadSpeed);
 
 
         // 플레이어 이동 (드리프트 특성 반영)
@@ -4571,8 +4626,14 @@
     const pad2 = n => String(n).padStart(2, '0');
     function resetRaceClock() {
         raceBannerNext = 0; raceBannerUntil = 0; lastBigCount = 0; raceLateSaid = false;
-        setText('clockDisplay', pad2(COURSE_INFO[selectedTheme].startH) + ':59:00');
+        const ci = COURSE_INFO[selectedTheme];
+        setText('clockDisplay', pad2(ci.startH) + ':59:00');
         document.getElementById('clockDisplay').classList.remove('late');
+        // 전자시계 아랫줄: 도착 목표 시각 (출근 09:00 / 퇴근 18:00 / 출국 12:00), 위쪽 AM·PM 표시
+        setText('clockAmPm', ci.startH < 12 ? 'AM' : 'PM');
+        setText('clockGoal', `${ci.goal} ${pad2(ci.startH + 1)}:00`);
+        document.getElementById('clockGoal').parentElement.classList.remove('late');
+        updateSpeedHud(0);
         hideRaceNotices();
     }
     function hideRaceNotices() {
@@ -4607,15 +4668,32 @@
         requestAnimationFrame(() => el.classList.add('on'));
         clearTimeout(bannerTimer); bannerTimer = setTimeout(() => el.classList.remove('on'), lateSec ? 1500 : 2200);
     }
+    // HUD 7세그먼트 화면 만들기 + 속도계 아래 얇은 선 (60초 때 최고 속도 = 꽉 참, 끝 20%는 빨강)
+    segInit(document.getElementById('clockDisplay'), '88:88:88');
+    segInit(document.getElementById('speedDisplay'), '888');
+    document.getElementById('speedBar').innerHTML = '<span></span>';
+    let speedHudPct = -1;
+    function updateSpeedHud(v) {
+        setText('speedDisplay', String(Math.min(999, Math.floor(v))));
+        const max = 240 * (tConfig ? tConfig.speedMult : 1);
+        const pct = Math.max(0, Math.min(100, Math.round(v / max * 100)));
+        if (pct === speedHudPct) return;
+        speedHudPct = pct;
+        const bar = document.getElementById('speedBar');
+        bar.firstChild.style.width = pct + '%';
+        bar.classList.toggle('hot', pct >= 80);
+    }
     function updateRaceClock() {
         const ci = COURSE_INFO[selectedTheme], sec = Math.min(59, Math.floor(gameTime));
         if (runEndless && gameTime >= 60) {   // 지각 모드: 정각이 지나도 빨간 시계가 계속 감 (09:00:18 …)
             const over = Math.floor(gameTime - 60), h = ci.startH + 1 + Math.floor(over / 3600);
+            setText('clockGoal', '⚠ 지각 중');
+            document.getElementById('clockDisplay').classList.add('late'); document.getElementById('clockGoal').parentElement.classList.add('late');
             setText('clockDisplay', `${pad2(h % 24)}:${pad2(Math.floor(over / 60) % 60)}:${pad2(over % 60)}`);
             return;
         }
         setText('clockDisplay', `${pad2(ci.startH)}:59:${pad2(sec)}`);
-        if (gameTime >= 50) document.getElementById('clockDisplay').classList.add('late');
+        if (gameTime >= 50) { document.getElementById('clockDisplay').classList.add('late'); document.getElementById('clockGoal').parentElement.classList.add('late'); }
         // 남은 시간 알림·카운트다운 없음. 50초에 반려동물만 한마디
         if (gameTime >= 50 && !raceLateSaid) { raceLateSaid = true; petSay('late', true); }
     }
