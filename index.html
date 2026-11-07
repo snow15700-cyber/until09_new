@@ -769,7 +769,17 @@
     const rpc = (fn, args) => sb('rpc/' + fn, { body: args });
     const fetchTop = course => sb(`time_records?select=nickname,tag,seconds,car,updated_at&course=eq.${course}&order=seconds.desc,updated_at.asc&limit=10`);
     // 명예의 전당: 무한모드 기록 높은 순 (무한모드를 안 했으면 60.0초), 같으면 먼저 클리어한 순
-    const fetchFame = course => sb(`hall_of_fame?select=id,fame_name,nickname,tag,car,cleared_at,endless_best&course=eq.${course}&order=endless_best.desc,cleared_at.asc,id.asc&limit=1000`);
+    // 날짜는 무한 기록을 세운 시각(endless_at), 무한모드를 안 했으면 처음 클리어한 시각
+    // (서버에 fame_date.sql을 아직 안 돌렸으면 endless_at을 못 읽으니 예전 방식으로 다시 불러옴)
+    let fameHasEndlessAt = true;
+    async function fetchFame(course) {
+        const q = (cols, order) => `hall_of_fame?select=${cols}&course=eq.${course}&order=${order}&limit=1000`;
+        if (fameHasEndlessAt) {   // 기록이 같으면 그 기록을 먼저 세운 사람이 위 (무한모드를 안 했으면 먼저 클리어한 순)
+            try { return await sb(q('id,fame_name,nickname,tag,car,cleared_at,endless_best,endless_at', 'endless_best.desc,endless_at.asc.nullslast,cleared_at.asc,id.asc')); }
+            catch (e) { if (!/HTTP 4/.test(String(e && e.message))) throw e; fameHasEndlessAt = false; }
+        }
+        return sb(q('id,fame_name,nickname,tag,car,cleared_at,endless_best', 'endless_best.desc,cleared_at.asc,id.asc'));
+    }
     const fetchMyRank = course => rpc('my_time_rank', { p_device: userData.deviceId, p_course: course }).then(r => (r && r[0]) || null);
 
     /* ---- 판 검증 (기록 조작 방어) ----
@@ -879,10 +889,10 @@
             const me = r.nickname === userData.nickname && r.tag === userData.tag;
             // 한 줄: 순위 · 차량 색 점 · 이름 · 날짜 · 기록
             return `<li class="flex items-center gap-2 px-2 py-1.5 rounded ${me ? 'bg-yellow-900 bg-opacity-50 text-yellow-200' : 'text-gray-200'}">
-                <span class="shrink-0 text-yellow-400 font-mono text-xs w-9">No.${i + 1}</span>
+                <span class="shrink-0 text-yellow-400 font-mono text-xs w-8 text-center">${i + 1}</span>
                 ${carDotHtml(r.car)}
                 <span class="truncate min-w-0 flex-1 ${me ? 'font-bold' : ''}">${esc(r.fame_name)}</span>
-                <span class="font-mono text-xs text-gray-500 shrink-0">${fmtShortDateTime(r.cleared_at)}</span>
+                <span class="font-mono text-xs text-gray-500 shrink-0">${fmtShortDateTime(r.endless_at || r.cleared_at)}</span>
                 <span class="font-mono font-bold text-yellow-300 shrink-0">${fmtTime(r.endless_best != null ? r.endless_best : 60)}</span></li>`;
         }).join('') + '</ol>';
     }
