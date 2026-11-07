@@ -563,6 +563,8 @@ function onGameOver(isWin = false) {
         : isRecord && runEndless ? `<span class="text-emerald-300 font-bold">🎉 첫 무한모드 기록!</span>`
         : `내 ${runEndless ? '무한모드 ' : ''}최고 기록 ${bestNow.toFixed(1)}s`;
     document.getElementById('earnedCredit').textContent = `+${creditEarned} C`;
+    window.lastResult = { course: selectedTheme, endless: runEndless, secs, isRecord, prevBest, best: bestNow, credit: creditEarned, win: !!isWin, title: titleEl.textContent };   // 기록 카드·도전장용
+    if (window.onResultShown) try { onResultShown(); } catch (e) {}
     if (runEndless) renderEndlessOnline(secs, isRecord);
     else renderResultOnline(isWin, secs);
 }

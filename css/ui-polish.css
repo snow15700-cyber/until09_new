@@ -50,3 +50,23 @@
     .lb-rank .ic { color: #422006; }
     .lb-card.locked .ic, .lb-modebtn.locked .ic { opacity: .75; }
     .dash-shield .ic { color: #6ee7b7; width: 13px; height: 13px; }
+
+
+/* ===== 공유: 카톡 도전장 버튼 · 도전장 창 · 도전 결과 ===== */
+.sh-kakao { background: #fee500; color: #191919; font-family: var(--ft); }
+.sh-kakao .ic { stroke-width: 2.6; }
+.sh-result { margin: -6px 0 14px; padding: 8px 10px; border-radius: 10px; font-size: 13px; line-height: 1.45; }
+.sh-result.win { background: rgba(16,185,129,.15); border: 1px solid rgba(52,211,153,.5); color: #a7f3d0; }
+.sh-result.lose { background: rgba(239,68,68,.12); border: 1px solid rgba(248,113,113,.45); color: #fecaca; }
+.sh-result b { color: #fff; }
+.sh-modal { position: fixed; inset: 0; z-index: 97; display: flex; align-items: center; justify-content: center; padding: 0 16px; background: rgba(0,0,0,.8); animation: fxFadeIn .22s ease-out both; }
+.sh-modal.hidden { display: none; }
+.sh-box { width: 100%; max-width: 340px; background: #111827; border: 1px solid #f97316; border-radius: 18px; padding: 22px 18px 16px; text-align: center; color: #e5e7eb; animation: fxPopIn .34s cubic-bezier(.2,.9,.3,1.2) both; }
+.sh-box h3 { margin: 0 0 8px; font-family: var(--ft); font-weight: 400; font-size: 22px; color: #fdba74; }
+.sh-icon { font-size: 40px; margin: 0 0 4px; }
+.sh-text { margin: 0 0 14px; font-size: 14px; line-height: 1.6; }
+.sh-text b { color: #fff; }
+.sh-text small { color: #9ca3af; font-size: 12px; }
+.sh-time { display: inline-block; margin: 4px 0; font-family: var(--ft); font-size: 40px; color: #facc15; }
+.sh-btn { display: block; width: 100%; border: 0; border-radius: 12px; padding: 12px 0; margin-top: 8px; font-family: var(--ft); font-size: 17px; color: #111827; background: #fb923c; }
+.sh-btn.ghost { background: #374151; color: #e5e7eb; font-size: 14px; padding: 10px 0; }
