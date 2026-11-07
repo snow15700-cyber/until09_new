@@ -33,4 +33,6 @@ HINT 2조 (김창명 · 김홍기 · 박소희 · 신재현 · 정인채 · 홍�
 | `js/17-gacha.js` | 차량 뽑기 연출 · 게임 시작 (맨 마지막) |
 | `js/ui-tap.js` | 탭 효과음 · 진동 |
 | `js/ui-transitions.js` | 팝업 등장/퇴장 · 숫자 카운트업 |
+| `js/debug-fps.js` | 성능 측정 도구 (주소 뒤에 `?debug`를 붙이면 표시) |
+| `js/lib/three.min.js` | 3D 엔진 three.js r128 (MIT 라이선스, 손으로 고치지 않음) |
 | `audio/` | 배경음악 · 뽑기 효과음 (mp3) |

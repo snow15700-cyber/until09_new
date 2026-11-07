@@ -90,8 +90,9 @@
     setTimeout(function () { window.__hideSplash(); }, 20000);
 })();
 </script>
-    <!-- crossorigin: 3D 엔진 안에서 오류가 나도 'Script error.'로 가려지지 않고 실제 내용이 보이게 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+    <!-- 3D 엔진(three.js r128): 우리 저장소의 파일을 먼저 씀. 혹시 없으면 외부 서버(cdnjs)에서 받아옴 -->
+    <script src="js/lib/three.min.js"></script>
+    <script>if (!window.THREE) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"><\/script>');</script>
     <script>if (!window.THREE) document.write('<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#fff;font:16px sans-serif;text-align:center;padding:24px;z-index:9999">3D 엔진을 불러오지 못했어요.<br>인터넷 연결을 확인하고 새로고침해 주세요.</div>');</script>
 
 <div id="game-container">
@@ -337,5 +338,6 @@
 <script src="js/17-gacha.js"></script>
 <script src="js/ui-tap.js"></script>
 <script src="js/ui-transitions.js"></script>
+<script src="js/debug-fps.js"></script>
 </body>
 </html>
