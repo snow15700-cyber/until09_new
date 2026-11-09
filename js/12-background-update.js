@@ -116,7 +116,7 @@ function update(realDt) {
 
     if (gameState !== 'PLAYING') return;
 
-    // 무한모드: 60초에 목적지 없이 '지각' 알림만 띄우고 계속 달림
+    // 무한모드: 60초에 목적지 없이 '지각' 알림(시계 파동·late-fx.js)만 주고 계속 달림
     if (runEndless && gameTime >= 60 && !endlessAnnounced) {
         endlessAnnounced = true; endlessNextBanner = 70;
         showEndlessBanner(0);
