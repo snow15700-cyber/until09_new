@@ -83,6 +83,7 @@ function rollGacha() {
     const car = CAR_DB[idx];
     const isNew = !userData.ownedCars.includes(car.id);
     if (isNew) userData.ownedCars.push(car.id); else userData.credits += GACHA_REFUND;
+    userData.stats.gachaPulls = (userData.stats.gachaPulls || 0) + 1; if (isNew) userData.stats.gachaNew = (userData.stats.gachaNew || 0) + 1;   // 관리자 통계
     gachaBusy = true;              // 연출이 끝날 때까지 로비 미리보기는 그대로
     currentCarIndex = idx;
     saveData();

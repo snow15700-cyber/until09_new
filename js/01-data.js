@@ -108,7 +108,9 @@ function loadData() {
         jumps: Number.isFinite(st.jumps) ? Math.max(0, Math.floor(st.jumps)) : 0,
         quotes: Array.isArray(st.quotes) ? st.quotes.filter(q => typeof q === 'string').slice(0, 300) : [],
         slows: Number.isFinite(st.slows) ? Math.max(0, Math.floor(st.slows)) : 0,          // 타임 컨트롤러 감속 사용 횟수 (거북이)
-        eveningEndless: Number.isFinite(st.eveningEndless) ? Math.max(0, Math.floor(st.eveningEndless)) : 0   // 퇴근길 무한모드 플레이 판 수 (햄스터)
+        eveningEndless: Number.isFinite(st.eveningEndless) ? Math.max(0, Math.floor(st.eveningEndless)) : 0,   // 퇴근길 무한모드 플레이 판 수 (햄스터)
+        gachaPulls: Number.isFinite(st.gachaPulls) ? Math.max(0, Math.floor(st.gachaPulls)) : 0,   // 차량 뽑기 횟수 (v26.11.09부터, 관리자 통계)
+        gachaNew: Number.isFinite(st.gachaNew) ? Math.max(0, Math.floor(st.gachaNew)) : 0          // 그중 새 차량
     };
     saveData();
 }

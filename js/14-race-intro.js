@@ -149,6 +149,7 @@ function gameLoop() {
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.1) dt = 0.1;
+    statFrame(dt);   // 평균 FPS (관리자 통계)
 
     update(dt);
     petTime += dt;

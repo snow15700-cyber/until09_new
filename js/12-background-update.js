@@ -230,6 +230,7 @@ function update(realDt) {
         e.meshGroup.position.z += (roadSpeed - e.speed) * dt;
 
         if (e.meshGroup.position.z > 20) {
+            if (RS) RS.ov++;   // 추월한 차
             removeCar(e.meshGroup); enemies.splice(i, 1); continue;
         }
 
@@ -238,6 +239,7 @@ function update(realDt) {
         if (!isInvincible && (checkCollision(player, e) || sweptCollision(player, e, prevZ))) {
             if (player.hasShield) {
                 player.hasShield = false;
+                if (RS) RS.sh = 1;
                 document.getElementById('shieldIcon').classList.add('hidden');
 
                 // 적 제거 + 별도 무적 타이머 (점프 상태는 건드리지 않음)

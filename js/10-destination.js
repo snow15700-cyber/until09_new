@@ -273,6 +273,7 @@ function initGame(opts = {}) {
     player.slowLeft = SLOW_USES;
     runEndless = endlessMode && endlessUnlocked(selectedTheme);
     beginRun();   // 서버에 판 시작 기록 (기록 조작 방어 · 통계)
+    statRunStart();   // 관리자 통계용 이번 판 기록 (stats-collect.js)
     endlessAnnounced = false;
     lastEndless = null;
     player.invincibleTimer = 0;
@@ -352,16 +353,16 @@ function initGame(opts = {}) {
 // 컨트롤 이벤트
 function moveLeft() {
     if (gameState !== 'PLAYING') return;
-    if (player.lane > 0) { player.lane--; player.targetX = laneCenters[player.lane]; }
+    if (player.lane > 0) { player.lane--; player.targetX = laneCenters[player.lane]; if (RS) RS.lc++; }
 }
 function moveRight() {
     if (gameState !== 'PLAYING') return;
-    if (player.lane < NUM_LANES - 1) { player.lane++; player.targetX = laneCenters[player.lane]; }
+    if (player.lane < NUM_LANES - 1) { player.lane++; player.targetX = laneCenters[player.lane]; if (RS) RS.lc++; }
 }
 function doJump() {
     if (gameState !== 'PLAYING' || player.ability === 'TIME_SLOW') return;
     if (player.jumpsLeft > 0 && !player.isJumping) {
-        player.isJumping = true; player.jumpTimer = 1.0; player.jumpsLeft--; userData.stats.jumps++; if (Math.random() < 0.6) petSay('jump');
+        player.isJumping = true; player.jumpTimer = 1.0; player.jumpsLeft--; userData.stats.jumps++; if (RS) RS.j++; if (Math.random() < 0.6) petSay('jump');
         updateJumpUI();
         updateScreenFx();
     }
@@ -371,7 +372,7 @@ function useSkill() {
     if (player.slowLeft > 0 && player.slowTimer <= 0) {   // 판당 2회 (감속 중엔 다시 못 씀)
         // [수정1] setTimeout 대신 타이머로 관리 (재시작/게임오버 시 꼬이지 않음)
         player.slowLeft--;
-        userData.stats.slows++;   // 거북이 입양 조건 (판이 끝날 때 저장됨)
+        userData.stats.slows++; if (RS) RS.sl++;   // 거북이 입양 조건 (판이 끝날 때 저장됨)
         updateJumpUI();   // 오른쪽 위 S 하나 흐리게
         player.timeScale = 0.5;
         player.slowTimer = SLOW_DURATION;
@@ -447,7 +448,7 @@ function spawnTriple() {
         const eCar = createCarMesh(eType.model, Math.random() * 0xffffff);
         eCar.mesh.position.set(laneCenters[l], 0, -200 - i * step);
         scene.add(eCar.mesh);
-        enemies.push({ meshGroup: eCar.mesh, width: eCar.width, length: eCar.length, speed: 0, passed: false });
+        enemies.push({ meshGroup: eCar.mesh, width: eCar.width, length: eCar.length, speed: 0, passed: false, kind: 'triple' });
     });
     // 패턴이 다 지나갈 때까지 다음 차를 쉬어서 빈 차선이 막히지 않게 (타이머가 spawnRate배로 줄어드니 미리 곱해둠)
     enemySpawnTimer = (2 * gapT + 0.4) * tConfig.spawnRate;
@@ -468,7 +469,7 @@ function spawnEnemies(dt) {
             let eCar = createCarMesh(eType.model, Math.random() * 0xffffff);
             eCar.mesh.position.set(laneCenters[available[i]], 0, -200 - (Math.random()*50));
             scene.add(eCar.mesh);
-            enemies.push({ meshGroup: eCar.mesh, width: eCar.width, length: eCar.length, speed: (Math.random()*30) - 15, passed: false });
+            enemies.push({ meshGroup: eCar.mesh, width: eCar.width, length: eCar.length, speed: (Math.random()*30) - 15, passed: false, kind: numCars === 2 ? 'pair' : 'single' });
         }
         // 난이도에 따른 생성 간격 감소
         let diff = Math.max(0.3, 1.2 - (gameTime / 60));
@@ -528,6 +529,7 @@ function onGameOver(isWin = false) {
     let creditEarned = Math.floor(Math.min(gameTime, 60)); // 1초당 1크레딧, 60초까지만 (무한모드도 동일)
     if (player.ability === 'CREDIT_BONUS') creditEarned = Math.floor(creditEarned * 1.2);   // 로드스터: 최대 72C
     userData.credits += creditEarned;
+    if (RS) RS.cr = creditEarned;
     let prevBest, isRecord;
     if (runEndless) {
         prevBest = userData.endlessBest[selectedTheme] || 0;
@@ -548,6 +550,7 @@ function onGameOver(isWin = false) {
         if (wasEndless && isRecord) userData.endlessPending[runCourse] = { s: secs, car: runCar, run: id };                 // 서버에 올라가면 지움
         saveData();
     });
+    statSnap();   // 관리자 통계용 이용자 요약
     // 개발자용 플레이 기록 (서버 함수가 60초까지만 받을 수 있어 무한모드는 60초로 맞춰 보냄)
     logPlay(runEndless ? secs >= 60 : isWin, Math.min(secs, 60));
     const newlyMet = PET_INFO.filter(p => !userData.pets.includes(p.id) && p.met() && !metBefore.includes(p.id));

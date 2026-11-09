@@ -342,6 +342,7 @@ let crash = null;
 function startCrash(e) {
     setTimeout(() => petSay('crash', true), 350);
     gameState = 'CRASH';
+    if (RS) RS.hit = (e.kind || 'single') + (player.timeScale < 1 ? '_slow' : '');   // 부딪힌 차 (관리자 통계)
     crash = { t: 0, enemy: e, spinP: (Math.random() < 0.5 ? -1 : 1) * 7, spinE: (Math.random() < 0.5 ? -1 : 1) * 5 };
     document.getElementById('controls').classList.add('hidden');
     player.slowTimer = 0; player.timeScale = 1.0; setGrayscale(false); updateScreenFx();

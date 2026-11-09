@@ -98,11 +98,12 @@ function beginRun() {
 // 판이 끝날 때 1번: 판 번호를 기다렸다가 끝난 시간을 보냄 (실패하면 모아뒀다 다음에)
 function endRun(secs) {
     const r = currentRun; currentRun = null;
+    const info = window.statRunInfo ? statRunInfo() : null;   // 관리자 통계용 추가 정보
     if (!r) return (lastRunPromise = Promise.resolve(null));
     lastRunPromise = r.promise.then(id => {
         if (!id) return null;
         if (!Array.isArray(userData.pendingRuns)) userData.pendingRuns = [];
-        userData.pendingRuns.push({ id, s: secs });
+        userData.pendingRuns.push(info ? { id, s: secs, i: info } : { id, s: secs });
         if (userData.pendingRuns.length > 30) userData.pendingRuns = userData.pendingRuns.slice(-30);
         saveData(); flushRuns();
         return id;
@@ -118,6 +119,7 @@ async function flushRuns() {
         while (userData.pendingRuns.length) {
             const p = userData.pendingRuns[0];
             await finishRun(p.id, p.s);   // ok / too_fast / none / done 모두 더 보낼 필요 없음
+            if (p.i) await rpc('run_info', { p_device: userData.deviceId, p_run: p.id, p_info: p.i }).catch(() => {});   // 서버에 stats_v2.sql이 없어도 그냥 넘어감
             userData.pendingRuns.shift(); saveData();
         }
     } catch (e) { /* 인터넷이 안 되면 다음에 */ }

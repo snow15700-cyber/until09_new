@@ -48,6 +48,14 @@ async function loadAdmin(key) {
     const body = document.getElementById('adminBody');
     body.innerHTML = '<p class="admin-note">불러오는 중…</p>';
     try {
+        if (adminTab !== 'basic') {   // 🔎 조합 분석 · 👥 이용자 (admin-explore.js)
+            try { await loadAdminExtra(key, body); }
+            catch (e) {
+                if (/HTTP 404/.test(String(e && e.message))) { body.innerHTML = adminTabsHtml() + '<p class="admin-err">서버에 stats_v2.sql을 아직 실행하지 않았어요. Supabase SQL Editor에서 실행한 뒤 다시 열어 주세요.</p>'; return; }
+                throw e;
+            }
+            return;
+        }
         const d = await rpc('admin_stats', { p_key: key, p_days: adminDays });
         try { sessionStorage.setItem('adminKey', key); } catch (e) {}
         body.innerHTML = adminHtml(d || {});
@@ -63,8 +71,7 @@ function adminHtml(d) {
     const carName = id => { const c = CAR_DB.find(x => x.id === id); return c ? c.name : (id || '(없음)'); };
     const petName = id => { const p = PET_INFO.find(x => x.id === id); return p ? p.species : '안 태움'; };
     const s = d.summary || {};
-    const periods = [[1, '24시간'], [7, '7일'], [30, '30일'], [3650, '전체']];
-    let h = `<div class="admin-chips">${periods.map(([v, l]) => `<button type="button" class="${adminDays === v ? 'on' : ''}" onclick="setAdminDays(${v})">${l}</button>`).join('')}</div>`;
+    let h = adminTabsHtml() + adminPeriodHtml();
     h += `<div class="admin-cards">
         <div><b>${n(s.runs)}</b><span>끝까지 한 판</span></div><div><b>${n(s.players)}</b><span>이용자(기기)</span></div>
         <div><b>${n(s.runs_today)}</b><span>오늘 판</span></div><div><b>${n(s.players_today)}</b><span>오늘 이용자</span></div></div>
