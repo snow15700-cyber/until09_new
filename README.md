@@ -17,7 +17,8 @@ HINT 2조 (김창명 · 김홍기 · 박소희 · 신재현 · 정인채 · 홍�
 | `js/01-data.js` | 저장 데이터(크레딧·차량·기록) 불러오기/저장 |
 | `js/02-online-ranking.js` | 닉네임 · 온라인 랭킹 · 명예의 전당 (Supabase) |
 | `js/03-lobby-ui.js` | 로비 화면 · 코스/차량/반려동물 탭 |
-| `js/04-admin.js` | 관리자 통계 |
+| `js/stats-collect.js` | 관리자 통계용 추가 기록 보내기 (점프·감속·쉴드·크레딧·부딪힌 차·기기·FPS·뽑기 등) |
+| `js/04-admin.js` | 관리자 통계 (📊 기본 탭) |
 | `js/05-audio.js` | 배경음악 · 효과음 · 음소거 |
 | `js/06-scene.js` | 3D 화면 준비 · 배경 만들기 |
 | `js/07-car-models.js` | 차량 3D 모델 |
@@ -35,6 +36,8 @@ HINT 2조 (김창명 · 김홍기 · 박소희 · 신재현 · 정인채 · 홍�
 | `js/ui-tap.js` | 탭 효과음 · 진동 |
 | `js/ui-transitions.js` | 팝업 등장/퇴장 · 숫자 카운트업 |
 | `js/share.js` | 기록 카드 저장 · 카톡 도전장 보내기/받기 |
+| `js/admin-explore.js` | 관리자 통계 🔎 조합 분석 · 👥 이용자 탭 |
+| `stats_v2.sql` | 자세한 통계용 서버 설정 (Supabase SQL Editor에서 1번 실행, 게임에는 안 올려도 됨) |
 | `og-image.jpg` | 카톡 등 링크 미리보기 이미지 (1200x630) |
 | `js/debug-fps.js` | 성능 측정 도구 (주소 뒤에 `?debug`를 붙이면 표시) |
 | `js/lib/three.min.js` | 3D 엔진 three.js r128 (MIT 라이선스, 손으로 고치지 않음) |
