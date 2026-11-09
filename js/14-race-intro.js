@@ -91,6 +91,7 @@ function hideRaceNotices() {
     clearTimeout(bannerTimer);
     document.getElementById('timeBanner').classList.remove('on');
     document.getElementById('bigCount').classList.remove('pop');
+    if (window.LateFx) LateFx.reset();
 }
 function showTimeBanner(left) {
     const el = document.getElementById('timeBanner');
@@ -100,24 +101,18 @@ function showTimeBanner(left) {
     clearTimeout(bannerTimer); bannerTimer = setTimeout(() => el.classList.remove('on'), 1500);
     raceBannerUntil = gameTime + 1.5;
 }
-// 무한모드 알림: 60초 "지각 확정!" (+ 뱃고동 소리) / 이후 10초마다 "지각 10초째" …
+// 무한모드 알림: 도로를 가리지 않도록 가운데 박스 대신 '시계에서 퍼지는 파동 + 시계 아래 표시 + 소리'로 알림 (late-fx.js)
+//  60초 "지각 확정!" (빨간 파동 3줄 + 화면 가장자리 번쩍 + 뱃고동) / 이후 10초마다 노란 파동, 1분마다 빨간 파동
 function showEndlessBanner(lateSec) {
-    const el = document.getElementById('timeBanner');
-    el.className = 'time-banner urgent endless';
     if (!lateSec) {
-        el.innerHTML = `⏰ 지각 확정! <b>이제부터 무한 버티기</b>`;
         playHorn();
         // 뱃고동이 잘 들리게 배경음악을 1.2초 동안 절반으로 줄였다가 되돌림
         const mk = currentMusic;
         if (mk) { rampMusic((VOLUME[mk] || 0.55) * 0.5, 0.08); setTimeout(() => { if (currentMusic === mk && !musicEl.paused) rampMusic(VOLUME[mk] || 0.55, 0.4); }, 1200); }
         setMusicRate(1.1);   // 배경음악 1.1배 빠르게 (결과 화면까지 유지, 다음 곡을 틀 때 원래대로)
         if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) {}
-    } else {
-        const m = Math.floor(lateSec / 60), s = lateSec % 60;
-        el.innerHTML = `⏰ ${COURSE_INFO[selectedTheme].goal} 지각 <b>${m ? m + '분' : ''}${m && s ? ' ' : ''}${s ? s + '초' : ''}</b>째`;
     }
-    requestAnimationFrame(() => el.classList.add('on'));
-    clearTimeout(bannerTimer); bannerTimer = setTimeout(() => el.classList.remove('on'), lateSec ? 1500 : 2200);
+    LateFx.show(lateSec);
 }
 // HUD 7세그먼트 화면 만들기 + 속도계 아래 얇은 선 (60초 때 최고 속도 = 꽉 참, 끝 20%는 빨강)
 segInit(document.getElementById('clockDisplay'), '88:88:88');

@@ -74,3 +74,24 @@
 
 /* ===== 패치노트가 길어도 화면 안에서 스크롤 (확인 버튼은 항상 보이게) ===== */
 #noticeBody.patch-notes { max-height: calc(100dvh - 250px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; padding-right: 4px; }
+
+/* ===== 무한모드 지각 알림: 시계에서 퍼지는 파동 · 시계 아래 표시 ===== */
+#lateFxLayer { position: absolute; inset: 0; z-index: 19; pointer-events: none; overflow: hidden; }
+.late-ring { position: absolute; border-radius: 50%; box-sizing: border-box; border: 3px solid var(--c);
+    box-shadow: 0 0 18px var(--c), inset 0 0 18px var(--c); opacity: 0; transform: scale(.04);
+    animation: lateRing .95s cubic-bezier(.2, .7, .3, 1) both; will-change: transform, opacity; }
+@keyframes lateRing { 0% { opacity: var(--o); transform: scale(.04); } 70% { opacity: calc(var(--o) * .45); } 100% { opacity: 0; transform: scale(1); } }
+.late-edge { position: absolute; inset: 0; box-shadow: inset 0 0 90px 24px rgba(239, 68, 68, .75); animation: lateEdge .85s ease-out both; }
+@keyframes lateEdge { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+.seg-device.late-bump { animation: lateBump .5s cubic-bezier(.3, 1.6, .5, 1); }
+.seg-device.late-bump.red { box-shadow: 0 0 22px rgba(239, 68, 68, .75); }
+@keyframes lateBump { 0% { transform: scale(1); } 35% { transform: scale(1.09); } 100% { transform: scale(1); } }
+.late-tag { display: none; align-self: flex-start; padding: 3px 10px 2px; border-radius: 8px; font-family: var(--ft); font-size: 14px; line-height: 1.35;
+    color: #fde68a; background: rgba(14, 18, 24, .62); border: 1px solid rgba(251, 191, 36, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    white-space: nowrap; font-variant-numeric: tabular-nums; }
+.late-tag.on { display: block; }
+.late-tag.red { color: #fecaca; border-color: rgba(248, 113, 113, .75); }
+.late-tag.pop { animation: lateTagPop .38s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes lateTagPop { 0% { transform: scale(.8); opacity: .4; } 100% { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .seg-device.late-bump, .late-tag.pop { animation: none; } }
+#game-container.late-on #lobbyScreen.hidden ~ .pet-bubble { top: calc(10.6rem + env(safe-area-inset-top, 0px)); }   /* 지각 표시와 겹치지 않게 */

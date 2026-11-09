@@ -28,6 +28,7 @@ HINT 2조 (김창명 · 김홍기 · 박소희 · 신재현 · 정인채 · 홍�
 | `js/12-background-update.js` | 배경 합치기(최적화) · 매 프레임 게임 진행 |
 | `js/13-lobby-cinema.js` | 로비 카메라 연출 |
 | `js/14-race-intro.js` | 로비 → 주행 카메라 연출 · 게임 루프 |
+| `js/late-fx.js` | 무한모드 지각 알림 (시계 파동 · 지각 ○초째 표시 · 띵 소리) |
 | `js/15-screenshot.js` | 스크린샷 저장 |
 | `js/16-car-preview.js` | 로비 차량 미리보기 |
 | `js/17-gacha.js` | 차량 뽑기 연출 · 게임 시작 (맨 마지막) |
