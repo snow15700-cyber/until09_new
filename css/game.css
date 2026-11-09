@@ -329,3 +329,56 @@
     #lobbyScreen.lb-leaving * { pointer-events: none !important; }
     #hud { transition: opacity 0.4s ease; }
     #hud.intro-hide { opacity: 0; }
+
+/* 로비 '업데이트 소식' 버튼 · 창 (js/patch-notes.js) */
+.lb-news { position: relative; padding: 0; width: 34px; flex: none; justify-content: center; overflow: visible; }
+.lb-rank, .lb-hi { flex: none; }
+/* 좁은 폰: 고사양 버튼은 아이콘 + ON/OFF만 (닉네임 자리 확보) */
+@media (max-width: 400px) { .lb-hi-t { display: none; } .lb-top { gap: 5px; } }
+.lb-newtag { display: none; position: absolute; top: -6px; right: -8px; padding: 1px 4px; border-radius: 6px; background: #ef4444; color: #fff;
+    font: 900 8.5px/1.3 'Pretendard Variable', sans-serif; font-style: normal; letter-spacing: .02em; box-shadow: 0 1px 4px rgba(0,0,0,.4); pointer-events: none; }
+.lb-news.glow { border-color: #facc15; color: #fde68a; animation: newsPulse 1.8s ease-in-out infinite; }
+.lb-news.glow .lb-newtag { display: block; }
+.lb-news.glow::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.75) 48%, transparent 66%) no-repeat; background-size: 250% 100%; animation: newsShine 2.8s ease-in-out infinite; }
+@keyframes newsPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(250,204,21,.0), 0 0 6px rgba(250,204,21,.45); } 50% { box-shadow: 0 0 0 4px rgba(250,204,21,.18), 0 0 16px rgba(250,204,21,.85); } }
+@keyframes newsShine { 0%, 55% { background-position: 130% 0; } 85%, 100% { background-position: -40% 0; } }
+@media (prefers-reduced-motion: reduce) { .lb-news.glow, .lb-news.glow::after { animation: none; } .lb-news.glow::after { display: none; } }
+.nw-box { display: flex; flex-direction: column; max-height: 86%; padding: 14px 14px 10px; }
+.nw-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: #fde047; font-size: 17px; }
+.nw-top button { border: 0; background: #1f2937; color: #fff; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+.nw-list { overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; }
+.nw-item { border: 1px solid #334155; border-radius: 12px; margin-bottom: 7px; background: #111827; }
+.nw-item.open { border-color: #a16207; }
+.nw-head { width: 100%; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: none; border: 0; color: #e5e7eb; cursor: pointer; text-align: left; }
+.nw-ver { font-weight: 900; font-size: 14px; color: #fde68a; display: flex; align-items: center; gap: 6px; }
+.nw-ver i { font-style: normal; font-size: 10px; font-weight: 900; background: #ca8a04; color: #111827; padding: 1px 6px; border-radius: 6px; }
+.nw-date { margin-left: auto; color: #94a3b8; font-size: 11.5px; }
+.nw-arrow { color: #94a3b8; transition: transform .2s; } .nw-item.open .nw-arrow { transform: rotate(180deg); }
+.nw-body { padding: 0 12px 10px; }
+.patch-notes .pn-cat { margin: 10px 0 5px; font-size: 12px; font-weight: 900; color: #fbbf24; border-bottom: 1px solid #374151; padding-bottom: 3px; }
+.patch-notes .pn-cat:first-of-type { margin-top: 2px; }
+.nw-list > .pn-team { text-align: center; margin: 8px 0 2px; font-size: 11.5px; color: #9ca3af; line-height: 1.55; } .nw-list > .pn-team b { color: #fcd34d; }
+
+/* 이스터에그: 서명 누르면 김부장 난입 */
+.boss-cameo { position: absolute; z-index: 140; width: 260px; display: flex; gap: 8px; align-items: center; padding: 9px 12px; border-radius: 14px;
+    background: rgba(255,255,255,.96); border: 3px solid #ef4444; color: #111827; box-shadow: 0 8px 24px rgba(0,0,0,.45);
+    opacity: 0; transform: translateY(8px) scale(.85) rotate(-2deg); pointer-events: none; transition: opacity .18s, transform .25s cubic-bezier(.34,1.8,.64,1); }
+.boss-cameo.show { opacity: 1; transform: none; animation: bossShake .35s .1s; }
+.boss-cameo .bc-face { font-size: 30px; line-height: 1; }
+.boss-cameo b { display: block; color: #dc2626; font-size: 12px; font-weight: 900; }
+.boss-cameo p { margin: 1px 0 0; font-size: 13px; font-weight: 800; line-height: 1.35; word-break: keep-all; }
+.boss-cameo.soft { border-color: #f59e0b; } .boss-cameo.soft b { color: #b45309; }
+@keyframes bossShake { 0%,100% { translate: 0 0; } 25% { translate: -3px 0; } 50% { translate: 3px 0; } 75% { translate: -2px 0; } }
+@media (prefers-reduced-motion: reduce) { .boss-cameo.show { animation: none; } }
+
+/* 베타 패치노트 끝의 경고 문구 · 누를 수 있는 'HINT 2조' */
+.patch-notes .pn-warn { text-align: center; margin: 10px 0 2px; font-size: 11px; color: #9ca3af; font-style: italic; }
+.pn-team .hint2 { cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 2px 4px; border-radius: 6px; }
+.pn-team .hint2:active { background: rgba(250,204,21,.15); }
+.pn-team { cursor: default; }
+
+/* 김부장 넥타이 선물 창 (tailwind 미리 빌드본에 없는 값은 여기서) */
+#tieModal { z-index: 96; }
+#tieModal .bg-red-500 { background: #ef4444; }
+#tieModal .text-gray-100 { color: #f3f4f6; }

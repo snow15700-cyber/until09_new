@@ -146,7 +146,7 @@
     function lobbyFree() {
         if (typeof gameState === 'undefined' || gameState !== 'LOBBY' || intro) return false;
         var lob = document.getElementById('lobbyScreen'); if (!lob || lob.classList.contains('hidden')) return false;
-        return !['noticeModal', 'nickModal', 'rankModal', 'adoptModal', 'gachaModal', 'adminModal', 'challengeModal'].some(function (id) { var m = document.getElementById(id); return m && !m.classList.contains('hidden'); });
+        return !['tieModal', 'newsModal', 'noticeModal', 'nickModal', 'rankModal', 'adoptModal', 'gachaModal', 'adminModal', 'challengeModal'].some(function (id) { var m = document.getElementById(id); return m && !m.classList.contains('hidden'); });
     }
     if (incoming) {
         var waitT = setInterval(function () {

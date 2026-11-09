@@ -231,6 +231,37 @@ for (let z = -400; z < 50; z += 30) {
     });
 }
 
+// 퇴근길 은행나무 가로수 (퇴근길에만 보임 · 가로등 사이에 드문드문 · 횡단보도 근처는 비움)
+//  노란 잎 덩어리 2개 + 줄기 + 발밑 은행잎 깔림. 바퀴 뒤로 날리는 낙엽(11-effects.js)과 짝
+const ginkgoGroup = new THREE.Group(); ginkgoGroup.visible = false; cityGroup.add(ginkgoGroup);
+const streetTrees = [];
+const ginkgoTrunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3626, roughness: 0.9 });
+const ginkgoLeafMats = [0xf2c230, 0xe9b01f, 0xf6d14e].map(c => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.12, flatShading: true, roughness: 0.85 }));   // 살짝 스스로 빛나게: 노을 아래서도 노랗게
+const ginkgoCarpetMat = new THREE.MeshStandardMaterial({ color: 0xe0ac2a, roughness: 1 });
+const ginkgoPitMat = new THREE.MeshStandardMaterial({ color: 0x3a3029, roughness: 1 });
+function makeGinkgo() {
+    const t = new THREE.Group(), s = 0.9 + Math.random() * 0.25;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16 * s, 0.24 * s, 3.4 * s, 6), ginkgoTrunkMat);
+    trunk.position.y = 1.7 * s + 0.3; t.add(trunk);
+    const leaf = ginkgoLeafMats[Math.floor(Math.random() * 3)];
+    const c1 = new THREE.Mesh(new THREE.IcosahedronGeometry(1.45 * s, 0), leaf);   // 위로 길쭉한 은행나무 수형
+    c1.scale.set(1, 1.35, 1); c1.position.y = 4.6 * s + 0.3; c1.rotation.y = Math.random() * 6.28; t.add(c1);
+    const c2 = new THREE.Mesh(new THREE.IcosahedronGeometry(1.0 * s, 0), ginkgoLeafMats[(ginkgoLeafMats.indexOf(leaf) + 1) % 3]);
+    c2.position.set(0.25, 6.3 * s + 0.3, -0.1); t.add(c2);
+    const carpet = new THREE.Mesh(new THREE.CircleGeometry(1.5, 7), ginkgoCarpetMat);   // 발밑에 떨어진 은행잎
+    carpet.rotation.x = -Math.PI / 2; carpet.rotation.z = Math.random() * 6.28; carpet.position.y = 0.31; t.add(carpet);
+    const pit = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), ginkgoPitMat);
+    pit.rotation.x = -Math.PI / 2; pit.position.y = 0.32; t.add(pit);
+    return t;
+}
+[-1, 1].forEach(sd => {
+    for (let z = -400 + (sd === 1 ? 0 : 15); z < 50; z += 30) {
+        if (((z + 400) % 75 + 75) % 75 < 8 || ((z + 400) % 75 + 75) % 75 > 70) continue;   // 횡단보도·신호등 자리 비움
+        const t = makeGinkgo(); t.position.set(sd * (roadWidth / 2 + 2.3), 0, z + (Math.random() - 0.5) * 3);
+        ginkgoGroup.add(t); streetTrees.push(t);
+    }
+});
+
 // 퇴근길 노을 해
 const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(28, 24, 16), new THREE.MeshBasicMaterial({ color: 0xff8a3d, fog: false }));
 sunMesh.position.set(0, 34, -560); sunMesh.visible = false; scene.add(sunMesh);
@@ -477,12 +508,12 @@ function tickRailCrossing(dt) {
 function scrollEnvironment(dist) {
     if (cityGroup.visible) tickTrafficLights(1/60);
     if (cityStrips) {
-        cityScroll += dist; placeStrips(cityStrips, cityScroll);
+        cityScroll += dist; placeStrips(cityStrips, cityScroll); if (treeStrips) placeStrips(treeStrips, cityScroll);
         crossings.forEach(b => { b.position.z += dist; if (b.position.z > 50) b.position.z -= 450; if (b.userData.tl) fadeTrafficLight(b.userData.tl, b.position.z); });
         if (natureGroup.visible) { natureScroll += dist; placeStrips(natureStrips, natureScroll); scrollNatureMovers(dist); }
         return;
     }
-    buildings.forEach(b => { b.position.z += dist; if (b.position.z > 50) b.position.z -= 450; });
+    buildings.concat(streetTrees).forEach(b => { b.position.z += dist; if (b.position.z > 50) b.position.z -= 450; });
     if (natureGroup.visible) { natureScrollers.forEach(o => { o.position.z += dist; if (o.position.z > 50) o.position.z -= 450; }); scrollNatureMovers(dist); }
 }
 function scrollNatureMovers(dist) {

@@ -211,6 +211,8 @@ function previewLoop() {
 
 // 앱 시작 시 데이터 로드 및 로비 렌더링
 loadData();
+defaultEndless(true); updateLobbyUI();   // 클리어한 코스는 무한모드로 시작
+applyTie();   // 이스터에그로 받은 김부장 넥타이 (착용 중이면)
 previewLoop();
 if (!userData.nickname) openNickname(true); else flushPending();
 flushPlays();   // 지난번에 못 보낸 플레이 기록

@@ -149,7 +149,7 @@ function selectTheme(theme) {
     if (first) lobbyFade(() => {
         const t = pendingTheme; pendingTheme = null;
         if (gameState !== 'LOBBY') return;   // 그 사이 출발했으면 코스를 바꾸지 않음 (달리는 중에 코스가 바뀌던 문제)
-        selectedTheme = t; applyTheme(); updateLobbyUI();
+        selectedTheme = t; defaultEndless(true); applyTheme(); updateLobbyUI();
     });   // 페이드 중 바꾸면 마지막 선택으로
 }
 function lobbyFade(fn) {
@@ -160,12 +160,12 @@ function lobbyFade(fn) {
 
 // ---- 반려동물 입양 ----
 let adoptArm = null, adoptArmTimer = null, adoptingId = null;
-// 함께한 시간 표기: 59초 / 12분 / 1시간 12분
+// 함께한 시간 표기: 59초 / 12분 5초 / 1시간 12분 5초 (0인 단위는 생략: 3분 / 1시간 5초)
 function fmtPetTime(sec) {
     sec = Math.floor(sec || 0);
     if (sec < 60) return sec + '초';
-    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
-    return h ? `${h}시간 ${m}분` : `${m}분`;
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    return [h ? h + '시간' : '', m ? m + '분' : '', s ? s + '초' : ''].filter(Boolean).join(' ');
 }
 // 받침에 따라 '와/과'
 function josaWa(name) {

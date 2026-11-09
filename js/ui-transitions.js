@@ -3,7 +3,7 @@
    - 나타날 때: 팝업은 살짝 커지며 등장, 결과 화면은 위로 차례차례
    - 사라질 때: 화면은 즉시 숨기고(게임 동작 그대로), 똑같이 생긴 '잔상'을 0.2초 동안 흐리게 지움 */
 (function () {
-var POPUP = ['noticeModal', 'nickModal', 'rankModal', 'adoptModal'];   // 상자가 튀어나오는 팝업
+var POPUP = ['noticeModal', 'nickModal', 'rankModal', 'adoptModal', 'newsModal', 'tieModal'];   // 상자가 튀어나오는 팝업
 var FADE  = ['gachaModal'];                                            // 자체 연출이 있어서 배경만 페이드
 function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 function once(el, cls, ms) { restart(el, cls); setTimeout(function () { el.classList.remove(cls); }, ms); }

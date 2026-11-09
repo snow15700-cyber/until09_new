@@ -10,7 +10,7 @@
    ========================================== */
 const MERGE_BACKGROUND = true;
 const STRIP_LEN = 450;
-let cityStrips = null, natureStrips = null, crossings = [];
+let cityStrips = null, natureStrips = null, treeStrips = null, crossings = [];
 let cityScroll = 0, natureScroll = 0;
 // 예전 배경은 z -400 ~ 50 사이에만 있었음 → 합친 띠도 -400보다 먼 부분은 잘라서 똑같이 보이게
 const STRIP_CLIP = [new THREE.Plane(new THREE.Vector3(0, 0, 1), 400)];
@@ -77,6 +77,8 @@ if (MERGE_BACKGROUND) {
     const cityStatic = buildings.filter(b => !crossings.includes(b));
     cityStrips = bakeStrip(cityStatic, cityGroup);
     natureStrips = bakeStrip(natureScrollers, natureGroup);
+    treeStrips = bakeStrip(streetTrees, ginkgoGroup);   // 퇴근길 은행나무
+    placeStrips(treeStrips, 0);
     placeStrips(cityStrips, 0); placeStrips(natureStrips, 0);
 }
 applyHiMode();

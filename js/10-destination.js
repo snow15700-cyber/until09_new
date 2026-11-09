@@ -224,6 +224,7 @@ function applyTheme() {
     tConfig = THEME_DB[selectedTheme];
     // 소풍길은 도시 대신 자연 배경
     cityGroup.visible = !tConfig.nature;
+    ginkgoGroup.visible = selectedTheme === 'evening';   // 은행나무 가로수는 퇴근길에만
     natureGroup.visible = !!tConfig.nature;
     ambientLight.intensity = tConfig.nature ? 0.85 : (selectedTheme === 'evening' ? 0.65 : 0.75);
     // 창문 불빛·가로등·노을
@@ -412,8 +413,24 @@ document.getElementById('rightBtn').addEventListener('mousedown', moveRight);
 document.getElementById('jumpBtn').addEventListener('mousedown', doJump);
 document.getElementById('skillBtn').addEventListener('mousedown', useSkill);
 
+// 결과 화면에서 스페이스바 = '다시 시도하기' (PC)
+//  · 부딪히는 순간 누르고 있던 스페이스바로 바로 재시작되지 않게: 꾹 누름(repeat) 무시 + 결과가 뜨고 0.6초 뒤부터
+//  · 팝업(닉네임 · 랭킹 · 도전장 등)이 열려 있을 땐 무시
+let resultShownAt = 0;
+const RESULT_MODALS = ['tieModal', 'newsModal', 'noticeModal', 'nickModal', 'rankModal', 'adoptModal', 'gachaModal', 'adminModal', 'challengeModal'];
+function resultSpaceRetry(e) {
+    if (gameState !== 'GAMEOVER' && gameState !== 'WIN') return false;
+    const end = document.getElementById('endScreen');
+    if (!end || end.classList.contains('hidden')) return false;
+    e.preventDefault();   // 결과 화면이 스크롤되거나, 포커스된 버튼이 함께 눌리지 않게
+    if (e.repeat || performance.now() - resultShownAt < 600) return true;
+    if (RESULT_MODALS.some(id => { const m = document.getElementById(id); return m && !m.classList.contains('hidden'); })) return true;
+    startRace();
+    return true;
+}
 window.addEventListener('keydown', (e) => {
     if (typing(e)) return;
+    if ((e.key === ' ' || e.key === 'Spacebar') && resultSpaceRetry(e)) return;
     if (e.key === 'ArrowLeft') moveLeft();
     if (e.key === 'ArrowRight') moveRight();
     if (e.key === ' ' || e.key === 'Spacebar') {
@@ -557,6 +574,7 @@ function onGameOver(isWin = false) {
     if (newlyMet.length) setTimeout(() => showToast(`🐾 ${newlyMet.map(p => p.species).join(', ')} 입양 조건 달성! 할인가로 입양할 수 있어요`), 900);
 
     document.getElementById('endScreen').classList.remove('hidden');
+    resultShownAt = performance.now();
     document.getElementById('endScreen').scrollTop = 0;
     document.getElementById('finalCourse').innerHTML = `${COURSE_NAMES[selectedTheme]}${runEndless ? ' <svg class="ic" aria-hidden="true"><use href="#i-infinity"/></svg> 무한모드' : ''} · 버틴 시간`;
     document.getElementById('finalTime').textContent = secs.toFixed(1) + 's';
