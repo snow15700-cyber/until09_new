@@ -320,6 +320,7 @@ function goLobby() {
     document.getElementById('screenFx').className = "absolute inset-0 pointer-events-none hidden z-10";
     document.getElementById('lobbyScreen').classList.remove('hidden');
     gameState = 'LOBBY';
+    defaultEndless(false);   // 방금 처음 클리어한 코스면 무한모드로
     applyTheme();
     refreshLobbyCar(true);
     lobbyCut(0);

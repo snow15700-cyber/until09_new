@@ -88,6 +88,128 @@ let weather = null;
 function pointsMat(color, size, opacity) {
     return new THREE.PointsMaterial({ color, size, map: GLOW_TEX, transparent: true, opacity, depthWrite: false, sizeAttenuation: true });
 }
+/* ---------- 바퀴 뒤로 날리는 조각 (퇴근길 은행잎 · 소풍길 꽃잎/풀잎) + 흙먼지 ----------
+   이 게임은 차가 제자리에 있고 도로가 뒤로 흘러감 → 바퀴에서 떨어진 조각은 '도로 속도'로 끌려가야 자연스러움
+   · 처음엔 도로 속도의 절반으로 출발 → 공기 저항으로 금방 도로와 같은 속도가 됨 (차 뒤로 길게 흩날림)
+   · 땅에 떨어지면 도로에 붙어 같이 흘러감 · 카메라 뒤(z > 25)로 지나가면 바로 재사용
+   · 빠를수록 진행 방향으로 길쭉하게 (잔상)
+   · 감속 스킬을 쓰면 worldSpeed가 줄어 조각도 같이 느려짐
+   부하: 종류마다 InstancedMesh / Points 1개 = 그리기 1번, 계산은 1프레임에 수십 개뿐 */
+const KICK_END_Z = 25;
+const kickM = new THREE.Matrix4(), kickR = new THREE.Matrix4(), kickS = new THREE.Matrix4(), kickE = new THREE.Euler(), kickZero = new THREE.Matrix4().makeScale(0, 0, 0);
+function makeKick(n, w, h, colors) {
+    const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, fog: true }), n);
+    mesh.frustumCulled = false;
+    const col = new THREE.Color();
+    for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, kickZero); mesh.setColorAt(i, col.setHex(colors[i % colors.length])); }
+    mesh.instanceColor.needsUpdate = true;
+    return { mesh, n, next: 0, acc: 0, p: new Float32Array(n * 3), v: new Float32Array(n * 3), r: new Float32Array(n * 3), rv: new Float32Array(n * 3), life: new Float32Array(n), down: new Uint8Array(n) };
+}
+// rate: 1초에 몇 개 · o: { up, side, grav, life, drag(도로 속도를 따라잡는 빠르기) }
+function tickKick(k, dt, emitting, rate, o, worldSpeed) {
+    if (emitting && player.meshGroup) {
+        k.acc += rate * dt;
+        while (k.acc >= 1) {
+            k.acc -= 1;
+            const i = k.next; k.next = (i + 1) % k.n;
+            const sd = Math.random() < 0.5 ? -1 : 1;
+            k.p[i * 3] = player.meshGroup.position.x + sd * (player.width / 2 - 0.1) + (Math.random() - 0.5) * 0.3;
+            k.p[i * 3 + 1] = 0.25; k.p[i * 3 + 2] = player.meshGroup.position.z + player.length * 0.32;
+            k.v[i * 3] = sd * (0.4 + Math.random() * o.side); k.v[i * 3 + 1] = o.up * (0.6 + Math.random() * 0.6);
+            k.v[i * 3 + 2] = worldSpeed * (0.03 + Math.random() * 0.07);   // 바퀴에서 막 떨어진 순간 → 공기에 끌려 급가속 (화면엔 0.2초쯤 보임)
+            for (let a = 0; a < 3; a++) { k.r[i * 3 + a] = Math.random() * 6.28; k.rv[i * 3 + a] = (Math.random() - 0.5) * 18; }
+            k.life[i] = o.life * (0.7 + Math.random() * 0.5); k.down[i] = 0;
+        }
+    }
+    const follow = Math.min(1, o.drag * dt);
+    for (let i = 0; i < k.n; i++) {
+        if (k.life[i] <= 0) continue;
+        k.life[i] -= dt;
+        if (k.p[i * 3 + 2] > KICK_END_Z) k.life[i] = 0;
+        if (k.life[i] <= 0) { k.mesh.setMatrixAt(i, kickZero); continue; }
+        const j = i * 3;
+        if (k.down[i]) k.v[j + 2] = worldSpeed;                        // 땅에 붙어 도로와 같이 흘러감
+        else {
+            k.v[j + 2] += (worldSpeed - k.v[j + 2]) * follow;            // 공기에 끌려 도로 속도로
+            k.v[j + 1] -= o.grav * dt; k.v[j] *= 1 - 1.5 * dt;
+            for (let a = 0; a < 3; a++) k.r[j + a] += k.rv[j + a] * dt;
+        }
+        k.p[j] += k.v[j] * dt; k.p[j + 1] += k.v[j + 1] * dt; k.p[j + 2] += k.v[j + 2] * dt;
+        if (!k.down[i] && k.p[j + 1] < 0.05) { k.down[i] = 1; k.p[j + 1] = 0.05; k.v[j] = k.v[j + 1] = 0; k.r[j] = -Math.PI / 2; k.r[j + 2] = 0; }
+        // 잔상: 카메라 쪽으로 빠르게 지나갈수록 앞뒤(z)로 길쭉하게
+        const stretch = 1 + Math.min(1.6, (k.down[i] ? 0 : k.v[j + 2]) / 140);
+        const sc = Math.min(1, k.life[i] * 4);
+        kickE.set(k.r[j], k.r[j + 1], k.r[j + 2]); kickR.makeRotationFromEuler(kickE);
+        kickS.makeScale(sc, sc, sc * stretch);
+        kickM.copy(kickS).multiply(kickR); kickM.setPosition(k.p[j], k.p[j + 1], k.p[j + 2]);
+        k.mesh.setMatrixAt(i, kickM);
+    }
+    k.mesh.instanceMatrix.needsUpdate = true;
+}
+/* ---------- 앞에서 날아오는 조각 (퇴근길 은행잎 · 소풍길 꽃잎/풀잎) ----------
+   도로 위 공중에 떠 있는 잎은 땅에 대해 거의 멈춰 있음 → 차 기준으론 '도로 속도'로 다가와 옆을 휙 스쳐 감
+   멀리(안개 속)에서 나타나 다가오므로 오래 보이고 속도감이 큼. 카메라 뒤로 지나가면 다시 먼 곳에서 나타남 */
+function makeAir(n, w, h, colors, box) {
+    const k = makeKick(n, w, h, colors);
+    k.box = box; k.ph = new Float32Array(n);
+    for (let i = 0; i < n; i++) airSpawn(k, i, -160 + Math.random() * 180);
+    return k;
+}
+function airSpawn(k, i, z) {
+    const b = k.box, j = i * 3;
+    k.p[j] = (Math.random() - 0.5) * 2 * b.x; k.p[j + 1] = b.y0 + Math.random() * (b.y1 - b.y0); k.p[j + 2] = z;
+    for (let a = 0; a < 3; a++) { k.r[j + a] = Math.random() * 6.28; k.rv[j + a] = (Math.random() - 0.5) * 7; }
+    k.ph[i] = Math.random() * 6.28; k.life[i] = 1;
+}
+function tickAir(k, dt, worldSpeed, t) {
+    const b = k.box, stretch = 1 + Math.min(1.6, worldSpeed / 140);
+    for (let i = 0; i < k.n; i++) {
+        const j = i * 3;
+        k.p[j] += Math.sin(t * 1.6 + k.ph[i]) * b.sway * dt;                     // 바람에 좌우로 흔들
+        k.p[j + 1] -= (b.fall + Math.sin(t * 2.3 + k.ph[i]) * b.fall) * dt;      // 팔랑팔랑 내려앉음
+        k.p[j + 2] += worldSpeed * dt;                                            // 도로와 같은 속도로 다가옴
+        for (let a = 0; a < 3; a++) k.r[j + a] += k.rv[j + a] * dt;
+        if (k.p[j + 2] > KICK_END_Z || k.p[j + 1] < 0.05) airSpawn(k, i, -170 + Math.random() * 60);
+        kickE.set(k.r[j], k.r[j + 1], k.r[j + 2]); kickR.makeRotationFromEuler(kickE);
+        kickS.makeScale(1, 1, stretch);                                           // 빠를수록 앞뒤로 길쭉 (잔상)
+        kickM.copy(kickS).multiply(kickR); kickM.setPosition(k.p[j], k.p[j + 1], k.p[j + 2]);
+        k.mesh.setMatrixAt(i, kickM);
+    }
+    k.mesh.instanceMatrix.needsUpdate = true;
+}
+// 흙먼지: 바퀴 바로 뒤에서 피어올라 도로를 따라 뒤로 길게 뻗는 연기 꼬리
+function makeDust(n, color, size, opacity) {
+    const p = new Float32Array(n * 3).fill(-999), geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(p, 3));
+    const pts = new THREE.Points(geo, pointsMat(color, size, opacity));
+    pts.frustumCulled = false;   // 처음엔 모두 화면 밖(-999)이라 통째로 안 그려지는 문제 방지
+    return { pts, n, next: 0, acc: 0, v: new Float32Array(n * 3), life: new Float32Array(n) };
+}
+function tickDust(d, dt, emitting, rate, worldSpeed) {
+    const p = d.pts.geometry.attributes.position.array;
+    if (emitting && player.meshGroup) {
+        d.acc += rate * dt;
+        while (d.acc >= 1) {
+            d.acc -= 1;
+            const i = d.next, sd = Math.random() < 0.5 ? -1 : 1; d.next = (i + 1) % d.n;
+            p[i * 3] = player.meshGroup.position.x + sd * (player.width / 2 - 0.15) + (Math.random() - 0.5) * 0.5;
+            p[i * 3 + 1] = 0.15; p[i * 3 + 2] = player.meshGroup.position.z + player.length * 0.35;
+            d.v[i * 3] = sd * (0.6 + Math.random() * 1.8); d.v[i * 3 + 1] = 0.8 + Math.random() * 1.4;
+            d.v[i * 3 + 2] = worldSpeed * Math.random() * 0.04;   // 거의 제자리에서 시작 → 점점 도로에 끌려감 = 뒤로 늘어지는 꼬리
+            d.life[i] = 0.7 + Math.random() * 0.5;
+        }
+    }
+    const follow = Math.min(1, 2.2 * dt);
+    for (let i = 0; i < d.n; i++) {
+        if (d.life[i] <= 0) continue;
+        d.life[i] -= dt;
+        if (d.life[i] <= 0 || p[i * 3 + 2] > KICK_END_Z) { d.life[i] = 0; p[i * 3 + 1] = -999; continue; }
+        d.v[i * 3 + 2] += (worldSpeed - d.v[i * 3 + 2]) * follow;
+        d.v[i * 3] *= 1 - 2 * dt; d.v[i * 3 + 1] *= 1 - 1.2 * dt;
+        p[i * 3] += d.v[i * 3] * dt; p[i * 3 + 1] += d.v[i * 3 + 1] * dt; p[i * 3 + 2] += d.v[i * 3 + 2] * dt;
+    }
+    d.pts.geometry.attributes.position.needsUpdate = true;
+}
 function clearWeather() {
     while (weatherGroup.children.length) {
         const o = weatherGroup.children.pop();
@@ -117,6 +239,7 @@ function buildWeather(theme) {
         const M = 160, sp = new Float32Array(M * 3).fill(-999);
         const sgeo = new THREE.BufferGeometry(); sgeo.setAttribute('position', new THREE.BufferAttribute(sp, 3));
         weather.spray = new THREE.Points(sgeo, pointsMat(0xeaf4ff, 0.45, 0.75));
+        weather.spray.frustumCulled = false;   // 처음 위치(-999) 기준으로 화면 밖 판정돼 물보라가 안 보이던 문제
         weather.sprayVel = new Float32Array(M * 3); weather.sprayLife = new Float32Array(M); weather.sprayNext = 0;
         weatherGroup.add(weather.spray);
     } else if (theme === 'evening') {
@@ -135,14 +258,20 @@ function buildWeather(theme) {
             weatherGroup.add(m); weather.rays.push(m);
         }
         // 공중에 떠다니는 먼지 (따뜻한 빛 알갱이)
-        const N = 380, pos = new Float32Array(N * 3);
+        const N = 304, pos = new Float32Array(N * 3);
         for (let i = 0; i < N; i++) pos.set([(Math.random() - 0.5) * 50, Math.random() * 18, -90 + Math.random() * 105], i * 3);
         const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         weather.dust = new THREE.Points(geo, pointsMat(0xffd08a, 0.28, 0.8));
         weatherGroup.add(weather.dust);
+        // 바퀴 뒤: 노을빛 흙먼지 + 은행잎 조금
+        weather.trailDust = makeDust(240, 0xffc48a, 0.95, 0.3); weatherGroup.add(weather.trailDust.pts);
+        weather.kick = makeKick(32, 0.32, 0.25, [0xffd23a, 0xf2b21f, 0xffe066, 0xe8961c]); weatherGroup.add(weather.kick.mesh);
+        weather.kickOpt = { up: 6, side: 3, grav: 7, life: 1.2, drag: 2.6 }; weather.kickRate = 8;
+        // 앞에서 날아와 차 옆을 스쳐 가는 은행잎 (도로 + 인도 위)
+        weather.air = makeAir(56, 0.42, 0.34, [0xffd23a, 0xf2b21f, 0xffe066, 0xe8961c], { x: 16, y0: 0.4, y1: 6, sway: 1.2, fall: 0.5 }); weatherGroup.add(weather.air.mesh);
     } else {
         // 꽃잎 (분홍·흰색), 흩날리며 떨어짐
-        const N = 320, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+        const N = 256, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
         const palette = [[1, 0.72, 0.82], [1, 0.9, 0.94], [1, 0.6, 0.75]];
         for (let i = 0; i < N; i++) {
             pos.set([(Math.random() - 0.5) * 60, Math.random() * 22, -110 + Math.random() * 125], i * 3);
@@ -165,6 +294,14 @@ function buildWeather(theme) {
             b.userData.phase = Math.random() * 6.28; b.userData.side = side;
             weatherGroup.add(b); weather.butterflies.push(b);
         }
+        // 바퀴 뒤: 꽃잎(분홍·흰색) + 풀잎(초록, 가늘고 길쭉)
+        weather.kick = makeKick(48, 0.26, 0.18, [0xff9fc0, 0xffd6e4, 0xffffff, 0xff7fa8]); weatherGroup.add(weather.kick.mesh);
+        weather.kickOpt = { up: 6, side: 3, grav: 8, life: 1.0, drag: 2.8 }; weather.kickRate = 18;
+        weather.kick2 = makeKick(40, 0.06, 0.36, [0x5cbf4a, 0x3f9e3a, 0x8fd16a]); weatherGroup.add(weather.kick2.mesh);
+        weather.kickOpt2 = { up: 5.5, side: 2.6, grav: 9, life: 0.8, drag: 3 }; weather.kickRate2 = 13;
+        // 앞에서 날아와 스쳐 가는 꽃잎(높이 다양) + 풀잎(낮게)
+        weather.air = makeAir(64, 0.34, 0.24, [0xff9fc0, 0xffd6e4, 0xffffff, 0xff7fa8], { x: 18, y0: 0.4, y1: 7, sway: 1.6, fall: 0.6 }); weatherGroup.add(weather.air.mesh);
+        weather.air2 = makeAir(32, 0.07, 0.42, [0x5cbf4a, 0x3f9e3a, 0x8fd16a], { x: 16, y0: 0.2, y1: 2.2, sway: 1, fall: 0.25 }); weatherGroup.add(weather.air2.mesh);
     }
     weatherGroup.visible = hiMode;
 }
@@ -190,20 +327,27 @@ function updateWeather(dt, worldSpeed) {
                 const sd = k % 2 ? 1 : -1;
                 sp[i * 3] = player.meshGroup.position.x + sd * (player.width / 2 - 0.1) + (Math.random() - 0.5) * 0.3;
                 sp[i * 3 + 1] = 0.2; sp[i * 3 + 2] = player.meshGroup.position.z + player.length * 0.32;
-                v[i * 3] = sd * (0.5 + Math.random() * 1.5); v[i * 3 + 1] = 2 + Math.random() * 2.5; v[i * 3 + 2] = 5 + Math.random() * 6;
+                v[i * 3] = sd * (0.5 + Math.random() * 1.5); v[i * 3 + 1] = 2 + Math.random() * 2.5; v[i * 3 + 2] = worldSpeed * (0.03 + Math.random() * 0.07);   // 바퀴에서 떨어진 뒤 도로 속도로 끌려감
                 life[i] = 0.45;
             }
         }
         for (let i = 0; i < life.length; i++) {
-            if (life[i] <= 0) { sp[i * 3 + 1] = -999; continue; }
-            life[i] -= dt; v[i * 3 + 1] -= 14 * dt;
+            if (life[i] <= 0 || sp[i * 3 + 2] > KICK_END_Z) { life[i] = 0; sp[i * 3 + 1] = -999; continue; }
+            life[i] -= dt; v[i * 3 + 1] -= 14 * dt; v[i * 3 + 2] += (worldSpeed - v[i * 3 + 2]) * Math.min(1, 2.8 * dt);   // 공기에 끌려 도로 속도로
             sp[i * 3] += v[i * 3] * dt; sp[i * 3 + 1] += v[i * 3 + 1] * dt; sp[i * 3 + 2] += v[i * 3 + 2] * dt;
         }
         sa.needsUpdate = true;
     }
+    // 바퀴 뒤 조각: 달리는 중이고 바퀴가 땅에 닿아 있을 때만 (점프 중엔 안 날림)
+    const onGround = worldSpeed > 0 && player.meshGroup && player.meshGroup.position.y < 0.3;
+    if (weather.trailDust) tickDust(weather.trailDust, dt, onGround, 128, worldSpeed);
+    if (weather.kick) tickKick(weather.kick, dt, onGround, weather.kickRate, weather.kickOpt, worldSpeed);
+    if (weather.kick2) tickKick(weather.kick2, dt, onGround, weather.kickRate2, weather.kickOpt2, worldSpeed);
+    if (weather.air) tickAir(weather.air, dt, worldSpeed, t);
+    if (weather.air2) tickAir(weather.air2, dt, worldSpeed, t);
     if (weather.rays) weather.rays.forEach(r => r.material.opacity = 0.08 + 0.06 * Math.sin(t * 0.7 + r.userData.phase));
     if (weather.dust) {
-        const a = weather.dust.geometry.attributes.position, p = a.array, dz = worldSpeed * 0.25 * dt;
+        const a = weather.dust.geometry.attributes.position, p = a.array, dz = worldSpeed * dt;   // 도로와 같은 속도
         for (let i = 0; i < p.length; i += 3) {
             p[i] += Math.sin(t * 0.5 + i) * 0.2 * dt; p[i + 1] += Math.cos(t * 0.4 + i) * 0.15 * dt; p[i + 2] += dz;
             if (p[i + 2] > 15) { p[i + 2] = -90; p[i] = (Math.random() - 0.5) * 50; p[i + 1] = Math.random() * 18; }
@@ -211,12 +355,12 @@ function updateWeather(dt, worldSpeed) {
         a.needsUpdate = true;
     }
     if (weather.petals) {
-        const a = weather.petals.geometry.attributes.position, p = a.array, ph = weather.petalPhase, dz = worldSpeed * 0.45 * dt;
+        const a = weather.petals.geometry.attributes.position, p = a.array, ph = weather.petalPhase, dz = worldSpeed * dt;   // 도로와 같은 속도
         for (let i = 0, j = 0; i < p.length; i += 3, j++) {
             p[i] += Math.sin(t * 1.3 + ph[j]) * 1.2 * dt;
             p[i + 1] -= (1.2 + (j % 5) * 0.2) * dt;
             p[i + 2] += dz;
-            if (p[i + 1] < 0 || p[i + 2] > 15) { p[i] = (Math.random() - 0.5) * 60; p[i + 1] = 14 + Math.random() * 8; p[i + 2] = -110 + Math.random() * 40; }
+            if (p[i + 1] < 0 || p[i + 2] > 15) { p[i] = (Math.random() - 0.5) * 60; p[i + 1] = 4 + Math.random() * 18; p[i + 2] = -150 + Math.random() * 60; }
         }
         a.needsUpdate = true;
     }

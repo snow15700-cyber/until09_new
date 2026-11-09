@@ -85,6 +85,16 @@ function renderLobbyPanel() {
 // ---- 무한모드 (코스를 클리어한 사람만) ----
 let endlessMode = false;
 const endlessUnlocked = k => (userData.best[k] || 0) >= 60;
+// 클리어한 코스는 무한모드가 기본값
+//  force: 접속할 때 · 코스를 바꿀 때 → 클리어했으면 무한모드로
+//  아니면(결과 화면 → 로비): 이 코스를 방금 처음 클리어했을 때만 무한모드로 바꾸고, 직접 고른 모드는 유지
+const endlessAuto = {};
+function defaultEndless(force) {
+    const k = selectedTheme;
+    if (!endlessUnlocked(k)) { endlessMode = false; return; }
+    if (force || !endlessAuto[k]) endlessMode = true;
+    endlessAuto[k] = true;
+}
 function setEndless(v) {
     if (v && !endlessUnlocked(selectedTheme)) { showToast(`🔒 ${COURSE_NAMES[selectedTheme]}을 60초 클리어하면 열려요`); return; }
     if (endlessMode === v) return;
