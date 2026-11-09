@@ -417,7 +417,7 @@ document.getElementById('skillBtn').addEventListener('mousedown', useSkill);
 //  · 부딪히는 순간 누르고 있던 스페이스바로 바로 재시작되지 않게: 꾹 누름(repeat) 무시 + 결과가 뜨고 0.6초 뒤부터
 //  · 팝업(닉네임 · 랭킹 · 도전장 등)이 열려 있을 땐 무시
 let resultShownAt = 0;
-const RESULT_MODALS = ['noticeModal', 'nickModal', 'rankModal', 'adoptModal', 'gachaModal', 'adminModal', 'challengeModal'];
+const RESULT_MODALS = ['tieModal', 'newsModal', 'noticeModal', 'nickModal', 'rankModal', 'adoptModal', 'gachaModal', 'adminModal', 'challengeModal'];
 function resultSpaceRetry(e) {
     if (gameState !== 'GAMEOVER' && gameState !== 'WIN') return false;
     const end = document.getElementById('endScreen');

@@ -18,6 +18,7 @@ const hex6 = n => '#' + n.toString(16).padStart(6, '0');
 
 function updateLobbyUI() {
     document.getElementById('lobbyCredit').textContent = userData.credits;
+    updateNewsBadge();   // 새 패치노트가 있으면 '업데이트 소식' 버튼 반짝임
     updateNickUI();
     if (!userData.ownedCars.includes(CAR_DB[currentCarIndex].id)) currentCarIndex = 0;   // 잠긴 차는 고를 수 없음
     const car = CAR_DB[currentCarIndex], ci = COURSE_INFO[selectedTheme];

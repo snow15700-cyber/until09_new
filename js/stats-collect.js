@@ -3,7 +3,7 @@
    - 이용자마다: 크레딧 · 보유 차량/반려동물 · 뽑기 횟수 · 코스별 최고 기록 (1줄, 계속 덮어씀)
    - 서버에 stats_v2.sql이 없으면 보내기만 실패하고 게임에는 영향 없음
    ※ 10-destination.js · 11-effects.js · 12-background-update.js · 14-race-intro.js 에서 RS 값을 올림 */
-const GAME_BUILD = 'v26.11.09';
+const GAME_BUILD = 'v26.11.10';
 let RS = null;   // 이번 판 기록 (Run Stats)
 
 function statPlatform() {
@@ -57,6 +57,7 @@ function statSnap(force) {
         best: userData.best, eb: userData.endlessBest,
         runs: st.runs || 0, jumps: st.jumps || 0, slows: st.slows || 0, quotes: (st.quotes || []).length,
         gp: st.gachaPulls || 0, gn: st.gachaNew || 0,
+        tie: userData.bossTie ? (userData.tieOn ? 1 : 0) : -1,   // 김부장 넥타이: -1 못 찾음 · 0 풀어 둠 · 1 매는 중
         pt: Object.fromEntries(Object.entries(userData.petTime || {}).map(([k, v]) => [k, Math.round(v)]))
     };
     rpc('snap_player', { p_device: userData.deviceId, p_info: info }).catch(() => {});

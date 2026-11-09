@@ -52,7 +52,7 @@ function applyHiMode() {
     weatherGroup.visible = hiMode;
     const btn = document.getElementById('hiModeBtn');
     if (btn) {
-        btn.innerHTML = hiMode ? '<svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg> 고사양 ON' : '<svg class="ic" aria-hidden="true"><use href="#i-zap"/></svg> 고사양 OFF';
+        btn.innerHTML = hiMode ? '<svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg> <span class="lb-hi-t">고사양 </span>ON' : '<svg class="ic" aria-hidden="true"><use href="#i-zap"/></svg> <span class="lb-hi-t">고사양 </span>OFF';   // 좁은 폰에선 '고사양' 글자를 숨김
         btn.className = 'lb-pill lb-hi ' + (hiMode ? 'on' : 'off');
     }
 }

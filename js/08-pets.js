@@ -63,6 +63,58 @@ const m = new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.28, 8, 16, Math.PI), E
 m.position.set(x, y, z); parent.add(m); return m;
   }
 
+  // ---------- 김부장의 빨간 넥타이 (이스터에그 보상, js/patch-notes.js) ----------
+  //  neck: 목에 두른 깃 + 매듭 + 가슴으로 늘어진 넥타이 / head: 이마에 질끈 두르고 옆에서 묶은 회식 부장님 스타일
+  const tieTex = (() => {   // 빨간 바탕 + 사선 줄무늬 (진한 빨강 · 금색)
+    const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+    x.fillStyle = '#d61f26'; x.fillRect(0, 0, 64, 64);
+    x.lineWidth = 7; x.strokeStyle = '#8f1016';
+    for (let i = -64; i < 128; i += 32) { x.beginPath(); x.moveTo(i, 64); x.lineTo(i + 64, 0); x.stroke(); }
+    x.lineWidth = 2.5; x.strokeStyle = '#f2c14e';
+    for (let i = -48; i < 128; i += 32) { x.beginPath(); x.moveTo(i, 64); x.lineTo(i + 64, 0); x.stroke(); }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(9, 9); return t;
+  })();
+  const TIE = TOON.on ? new THREE.MeshToonMaterial({ color: 0xdedede, map: tieTex, gradientMap: toonGrad }) : new THREE.MeshStandardMaterial({ map: tieTex, roughness: 0.6 });
+  const TIE_KNOT = M(0xb3161d, 0.6);
+  const TIE_OL = new THREE.MeshBasicMaterial({ color: 0x3a2418, side: THREE.BackSide });
+  function tieBlade(len, w) {   // 위가 좁고 아래가 넓은 뾰족한 넥타이 한 장 (위 끝이 원점, 아래로 늘어짐)
+    const sh = new THREE.Shape();
+    sh.moveTo(-w * 0.32, 0); sh.lineTo(w * 0.32, 0); sh.lineTo(w * 0.5, -len * 0.82); sh.lineTo(0, -len); sh.lineTo(-w * 0.5, -len * 0.82); sh.closePath();
+    const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.022, bevelEnabled: false }); geo.translate(0, 0, -0.011);
+    const m = new THREE.Mesh(geo, TIE); m.castShadow = true; m.userData.noOutline = true;
+    if (TOON.on) {   // 얇아서 자동 외곽선이 안 붙음 → 직접 붙임
+      const sh2 = new THREE.Shape(), o = 0.016;
+      sh2.moveTo(-w * 0.32 - o, o); sh2.lineTo(w * 0.32 + o, o); sh2.lineTo(w * 0.5 + o, -len * 0.82); sh2.lineTo(0, -len - o * 1.6); sh2.lineTo(-w * 0.5 - o, -len * 0.82); sh2.closePath();
+      const g2 = new THREE.ExtrudeGeometry(sh2, { depth: 0.04, bevelEnabled: false }); g2.translate(0, 0, -0.02);
+      const ol = new THREE.Mesh(g2, TIE_OL); ol.userData.noOutline = true; m.add(ol);
+    }
+    return m;
+  }
+  function knot(parent, r, x, y, z) { const k = sph(parent, r, TIE_KNOT, x, y, z, 1.1, 0.95, 0.8); k.userData.noOutline = true; return k; }
+  function buildTie(sp) {
+    const t = new THREE.Group(); t.name = 'bossTie';
+    if (sp.type === 'neck') {
+      const collar = new THREE.Mesh(new THREE.TorusGeometry(sp.r, 0.022, 8, 28), TIE);
+      collar.rotation.x = Math.PI / 2 + (sp.collarTilt || 0); collar.position.set(0, sp.y, sp.z); collar.scale.set(1, sp.rz || 1, 1); t.add(collar);
+      const front = new THREE.Group(); front.position.set(0, sp.y - 0.01, sp.front); front.rotation.x = sp.tilt; t.add(front);
+      knot(front, sp.w * 0.42, 0, 0, 0.012);
+      const b = tieBlade(sp.len, sp.w); b.position.set(0, -sp.w * 0.25, 0.006); front.add(b);
+    } else {
+      const band = new THREE.Mesh(new THREE.TorusGeometry(sp.r, 0.03, 8, 30), TIE);
+      band.rotation.set(Math.PI / 2 - 0.12, 0, 0.16); band.position.set(0, sp.y, sp.z || 0); band.scale.set(1, sp.rz || 1, 1); t.add(band);
+      // 오른쪽 옆머리에서 묶은 매듭 + 삐죽 늘어진 두 가닥
+      const th = 1.0;   // 매듭 위치: 정면에서 오른쪽으로 약 57° (관자놀이쯤) → 앞에서 봐도 늘어진 가닥이 보임
+      const side = new THREE.Group(); const ro = sp.r * 1.06;   // 머리 표면보다 살짝 바깥 (가닥이 머리 속으로 파묻히지 않게)
+      side.position.set(ro * Math.sin(th), sp.y - sp.r * 0.12, (sp.z || 0) + ro * Math.cos(th) * (sp.rz || 1)); side.rotation.y = th * 0.6; t.add(side);
+      knot(side, sp.w * 0.6, 0, 0, 0);
+      // 두 가닥이 옆머리를 따라 아래로 축 늘어짐 (한 가닥은 조금 더 바깥으로)
+      const a = tieBlade(sp.len, sp.w); a.rotation.set(-(sp.lift || 0.15), 0, 0.5); side.add(a);
+      const b = tieBlade(sp.len * 0.82, sp.w * 0.92); b.rotation.set(-(sp.lift || 0.15) * 0.8, 0.35, 0.18); side.add(b);
+    }
+    return t;
+  }
+  let tieOn = false;
+
   // ---------- 방석 (지붕 고정용) ----------
   function buildCushion(hex) {
 const g = new THREE.Group();
@@ -105,7 +157,7 @@ const ears = [-1, 1].map(sd => {
   return pivot;
 });
 const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
-return { group: outer, update(t, j) {
+return { group: outer, tie: { parent: g, type: 'neck', y: 0.53, z: 0.13, r: 0.19, front: 0.3, len: 0.25, w: 0.11, tilt: -0.28 }, update(t, j) {
   // 6초마다 1.6초 동안 뒤돌아봄 (점프하면 바로 돌아봄)
   const c = t % 6, look = lobbyMode ? 0 : Math.max(ease((c - 3.8) / 0.35) * (1 - ease((c - 5.1) / 0.35)), j);
   head.rotation.y = look * 2.3; g.rotation.y = look * 0.75;
@@ -161,7 +213,7 @@ const ears = [-1, 1].map(sd => {
   const inner = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.11, 10), P); inner.scale.z = 0.5; inner.position.set(0, 0.06, 0.035); inner.userData.noOutline = true; pivot.add(inner);
   return pivot;
 });
-return { group: outer, update(t, j) {
+return { group: outer, tie: { parent: g, type: 'neck', y: 0.2, z: 0.22, r: 0.16, front: 0.37, len: 0.17, w: 0.085, tilt: -0.35 }, update(t, j) {
   // 평소엔 ^^ 만족한 눈, 7초마다 잠깐 눈 뜸 (점프하면 놀라서 뜸)
   const awake = j > 0 || (t % 7) > 6.1;
   open.visible = awake; shut.visible = !awake;
@@ -187,7 +239,7 @@ sph(body, 0.03, P, 0, 0.43, 0.37, 1.3, 1, 1);             // 코
 [-1, 1].forEach(sd => { sph(body, 0.09, G, sd * 0.21, 0.68, 0.0, 1, 1, 0.45); sph(body, 0.055, P, sd * 0.21, 0.68, 0.03, 1, 1, 0.3); });
 sph(body, 0.12, M(0xd99a52), 0, 0.72, -0.12, 1.4, 0.35, 1);  // 정수리 진한 털
 const paws = [-1, 1].map(sd => sph(body, 0.05, P, sd * 0.11, 0.39, 0.41, 1.1, 0.8, 1.2));  // 테두리에 걸친 앞발
-return { group: g, update(t, j) {
+return { group: g, tie: { parent: body, type: 'head', y: 0.63, z: -0.01, r: 0.285, len: 0.36, lift: 0.75, w: 0.075 }, update(t, j) {
   // 천천히 오르내리며 두리번, 가끔 쏙 숨었다 나옴 (점프하면 놀라서 쏙)
   const c = t % 8, duck = c > 6.6 && c < 7.4 ? Math.sin((c - 6.6) / 0.8 * Math.PI) : 0;
   const d = Math.max(duck, j);
@@ -237,7 +289,7 @@ const ears = [-1, 1].map(sd => {
   return pivot;
 });
 ears[1].children.forEach(c => c.material = c.material);   // 오른쪽 귀는 살짝 접힘 (update에서 처리)
-return { group: g, update(t, j) {
+return { group: g, tie: { parent: hop, type: 'neck', y: 0.47, z: 0.0, r: 0.19, front: 0.24, len: 0.21, w: 0.1, tilt: -0.22 }, update(t, j) {
   const cyc = t % 3.2, h = cyc < 0.45 ? Math.sin(cyc / 0.45 * Math.PI) : 0;
   hop.position.y = (reduceMotion ? 0 : h * 0.18) + j * 0.15;
   ears[0].rotation.z = 0.12 + Math.sin(t * 1.5) * 0.05 - h * 0.15;
@@ -267,7 +319,7 @@ beak.rotation.x = Math.PI / 2 + 0.55; beak.position.set(0, -0.04, 0.24); head.ad
   eye(head, sd * 0.1, 0.04, 0.2, 0.045);
 });
 sph(head, 0.05, Gr, 0, 0.2, -0.02, 0.6, 1.3, 1);           // 머리깃
-return { group: g, update(t, j) {
+return { group: g, tie: { parent: head, type: 'head', y: 0.13, z: -0.02, r: 0.172, len: 0.3, w: 0.065 }, update(t, j) {
   const bob = Math.sin(t * 2.4);
   head.rotation.z = bob > 0.7 ? 0.32 : Math.sin(t * 0.8) * 0.05;  // 갸웃
   head.position.y = 0.8 + Math.max(0, Math.sin(t * 5)) * 0.025;
@@ -302,7 +354,7 @@ eye(open, -0.075, 0.04, 0.12, 0.042); eye(open, 0.075, 0.04, 0.12, 0.042);
 closedEye(shut, -0.075, 0.035, 0.145, 0.032); closedEye(shut, 0.075, 0.035, 0.145, 0.032);
 blush(head, -0.11, -0.03, 0.11, 0.04); blush(head, 0.11, -0.03, 0.11, 0.04);
 const smile = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.009, 6, 12, Math.PI), EYE); smile.rotation.z = Math.PI; smile.position.set(0, -0.035, 0.155); head.add(smile);
-return { group: g, update(t, j) {
+return { group: g, tie: { parent: head, type: 'head', y: 0.09, z: 0.0, r: 0.135, rz: 1.05, len: 0.26, w: 0.055 }, update(t, j) {
   const peek = (Math.sin(t * 0.6) + 1) / 2;           // 천천히 머리 넣었다 빼기
   head.position.z = 0.42 + peek * 0.12 - j * 0.1;
   head.rotation.y = Math.sin(t * 0.4) * 0.2;
@@ -332,12 +384,16 @@ return { group: g, update(t, j) {
         const holder = new THREE.Group(); holder.position.y = def.holderY ?? 0.17; root.add(holder);
         const m = def.build(); holder.add(m.group);
         addOutlines(root);
+        const tie = m.tie ? buildTie(m.tie) : null;   // 외곽선은 넥타이가 직접 가짐
+        if (tie) { m.tie.parent.add(tie); tie.visible = tieOn; }
         root.traverse(o => { if (o.isMesh && o.material !== OUTLINE) o.castShadow = true; });
-        return (cache[id] = { id, def, root, holder, model: m });
+        return (cache[id] = { id, def, root, holder, model: m, tie });
     }
     return {
         cushionOf: id => (PETS.find(p => p.id === id) || PETS[0]).cushion,
         setLobby(v) { lobbyMode = v; },
+        // 김부장 넥타이 착용/해제 (모든 반려동물에 한 번에)
+        setTie(v) { tieOn = !!v; Object.values(cache).forEach(c => { if (c.tie) c.tie.visible = tieOn; }); },
         mount(carMesh, carModel, id) {
             model = carModel;
             if (!id) { if (cur && cur.root.parent) cur.root.parent.remove(cur.root); cur = null; return null; }   // 반려동물 없이
